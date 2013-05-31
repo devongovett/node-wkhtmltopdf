@@ -17,7 +17,7 @@ function wkhtmltopdf(input, options) {
       args.push(key);
       
     if (typeof val !== 'boolean')
-      args.push(val);
+      args.push('"' + val + '"');
   }
   
   var isUrl = /(https?|file):\/\//.test(input);
