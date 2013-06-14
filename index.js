@@ -25,7 +25,7 @@ function wkhtmltopdf(input, options) {
     }
   }
   
-  var isUrl = /(https?|file):\/\//.test(input);
+  var isUrl = /^(https?|file):\/\//.test(input);
   args.push(isUrl ? input : '-'); // stdin if HTML given directly
   args.push(output || '-');       // stdout if no output file
   
