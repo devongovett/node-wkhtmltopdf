@@ -11,7 +11,8 @@ function wkhtmltopdf(input, options) {
   var args = [wkhtmltopdf.command, '--quiet'];
   for (var key in options) {
     var val = options[key];
-    key = '--' + slang.dasherize(key);
+
+    key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
     
     if (val !== false)
       args.push(key);
