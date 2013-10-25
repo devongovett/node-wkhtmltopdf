@@ -1,9 +1,13 @@
 var spawn = require('child_process').spawn;
 var slang = require('slang');
 
-function wkhtmltopdf(input, options) {
+function wkhtmltopdf(input, options, callback) {
   if (!options)
     options = {};
+  else if (options === typeof 'function') {
+    callback = options;
+    options = {};
+  }
   
   var output = options.output;
   delete options.output;
@@ -31,6 +35,10 @@ function wkhtmltopdf(input, options) {
   
   // this nasty business prevents piping problems on linux
   var child = spawn('/bin/sh', ['-c', args.join(' ') + ' | cat']);
+
+  if (callback)
+    child.on('exit', callback);
+
   if (!isUrl)
     child.stdin.end(input);
   
