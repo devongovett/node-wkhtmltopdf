@@ -20,7 +20,7 @@ wkhtmltopdf('<h1>Test</h1><p>Hello world</p>')
 // output to a file directly
 wkhtmltopdf('http://apple.com/', { output: 'out.pdf' });
 
-// Optional calback
+// Optional callback
 wkhtmltopdf('http://google.com/', { pageSize: 'letter' }, function (code, signal) {
 });
 wkhtmltopdf('http://google.com/', function (code, signal) {
