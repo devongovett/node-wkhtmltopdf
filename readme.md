@@ -19,6 +19,12 @@ wkhtmltopdf('<h1>Test</h1><p>Hello world</p>')
   
 // output to a file directly
 wkhtmltopdf('http://apple.com/', { output: 'out.pdf' });
+
+// Optional callback
+wkhtmltopdf('http://google.com/', { pageSize: 'letter' }, function (code, signal) {
+});
+wkhtmltopdf('http://google.com/', function (code, signal) {
+});
 ```
 
 `wkhtmltopdf` is just a function, which you call with either a URL or an inline HTML string, and it returns
