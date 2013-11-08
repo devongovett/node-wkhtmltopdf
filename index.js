@@ -49,9 +49,7 @@ function spawnPdfGenerationProcess(args) {
 
   if(process.platform === 'win32') {
 
-    var commandPath = args[0];
-    args.splice(0, 1);
-    return spawn(commandPath, args);
+      return spawn(args[0], args.slice(1));
 
   } else {
 
