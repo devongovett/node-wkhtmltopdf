@@ -32,9 +32,8 @@ function wkhtmltopdf(input, options, callback) {
   var isUrl = /^(https?|file):\/\//.test(input);
   args.push(isUrl ? input : '-'); // stdin if HTML given directly
   args.push(output || '-');       // stdout if no output file
-  
-  // this nasty business prevents piping problems on linux
-  var child = spawn('/bin/sh', ['-c', args.join(' ') + ' | cat']);
+
+  var child = spawnPdfGenerationProcess(args);
 
   if (callback)
     child.on('exit', callback);
@@ -44,6 +43,22 @@ function wkhtmltopdf(input, options, callback) {
   
   // return stdout stream so we can pipe
   return child.stdout;
+}
+
+function spawnPdfGenerationProcess(args) {
+
+  if(process.platform === 'win32') {
+
+    var commandPath = args[0];
+    args.splice(0, 1);
+    return spawn(commandPath, args);
+
+  } else {
+
+    // this nasty business prevents piping problems on linux
+    return spawn('/bin/sh', ['-c', args.join(' ') + ' | cat']);
+
+  }
 }
 
 wkhtmltopdf.command = 'wkhtmltopdf';
