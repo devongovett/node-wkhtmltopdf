@@ -11,7 +11,7 @@ var wkhtmltopdf = require('wkhtmltopdf');
 
 // URL
 wkhtmltopdf('http://google.com/', { pageSize: 'letter' })
-  .pipe(fs.createReadStream('out.pdf'));
+  .pipe(fs.createWriteStream('out.pdf'));
   
 // HTML
 wkhtmltopdf('<h1>Test</h1><p>Hello world</p>')
