@@ -2,9 +2,9 @@ var spawn = require('child_process').spawn;
 var slang = require('slang');
 
 function wkhtmltopdf(input, options, callback) {
-  if (!options)
+  if (!options) {
     options = {};
-  else if (options === typeof 'function') {
+  } else if (typeof options == 'function') {
     callback = options;
     options = {};
   }
