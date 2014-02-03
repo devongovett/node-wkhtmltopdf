@@ -37,6 +37,16 @@ options are camelCased instead-of-dashed as in the command line tool.
 There is also an `output` option that can be used to write the output directly to a filename, instead of returning
 a stream.
 
+A setPath function prepends the wkhtmltopdf command with the supplied path:
+
+```javascript
+var wkhtmltopdf = require('wkhtmltopdf');
+
+wkhtmltopdf.setPath('C:\\Program Files (x86)\\wkhtmltopdf');
+
+wkhtmltopdf('http://google.com/', { output: 'out.pdf' });
+```
+
 ## Installation
 
 First, you need to install the wkhtmltopdf command line tool on your system.  The easiest way to do this is to

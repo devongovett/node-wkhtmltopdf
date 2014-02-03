@@ -50,5 +50,17 @@ function wkhtmltopdf(input, options, callback) {
   return child.stdout;
 }
 
+wkhtmltopdf.setPath = function(path) {
+  if (!path)
+    return;
+
+  if (!path.match(/[\\|\/]$/)) {
+    wkhtmltopdf.command = (process.platform === 'win32' ? '\\' : '/') + wkhtmltopdf.command;
+  }
+  wkhtmltopdf.command = path + wkhtmltopdf.command;
+  console.log('wkhtmltopdf.command', wkhtmltopdf.command);
+  return;
+};
+
 wkhtmltopdf.command = 'wkhtmltopdf';
 module.exports = wkhtmltopdf;
