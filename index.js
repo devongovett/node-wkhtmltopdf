@@ -58,7 +58,6 @@ wkhtmltopdf.setPath = function(path) {
     wkhtmltopdf.command = (process.platform === 'win32' ? '\\' : '/') + wkhtmltopdf.command;
   }
   wkhtmltopdf.command = path + wkhtmltopdf.command;
-  console.log('wkhtmltopdf.command', wkhtmltopdf.command);
   return;
 };
 
