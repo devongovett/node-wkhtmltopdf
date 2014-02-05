@@ -55,9 +55,10 @@ wkhtmltopdf.setPath = function(path) {
     return;
 
   if (!path.match(/[\\|\/]$/)) {
-    wkhtmltopdf.command = (process.platform === 'win32' ? '\\' : '/') + wkhtmltopdf.command;
+    wkhtmltopdf.command = path + (process.platform === 'win32' ? '\\' : '/')+ 'wkhtmltopdf';
+  } else {
+    wkhtmltopdf.command = path + 'wkhtmltopdf';
   }
-  wkhtmltopdf.command = path + wkhtmltopdf.command;
   return;
 };
 
