@@ -1,5 +1,6 @@
 var spawn = require('child_process').spawn;
 var slang = require('slang');
+var path  = require('path');
 
 function wkhtmltopdf(input, options, callback) {
   if (!options) {
@@ -50,16 +51,8 @@ function wkhtmltopdf(input, options, callback) {
   return child.stdout;
 }
 
-wkhtmltopdf.setPath = function(path) {
-  if (!path)
-    return;
-
-  if (!path.match(/[\\|\/]$/)) {
-    wkhtmltopdf.command = path + (process.platform === 'win32' ? '\\' : '/')+ 'wkhtmltopdf';
-  } else {
-    wkhtmltopdf.command = path + 'wkhtmltopdf';
-  }
-  return;
+wkhtmltopdf.setPath = function(part) {
+  return wkhtmltopdf.command = path.join(part, 'wkhtmltopdf');
 };
 
 wkhtmltopdf.command = 'wkhtmltopdf';
