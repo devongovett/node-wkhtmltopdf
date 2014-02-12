@@ -1,5 +1,6 @@
 var spawn = require('child_process').spawn;
 var slang = require('slang');
+var path  = require('path');
 
 function wkhtmltopdf(input, options, callback) {
   if (!options) {
@@ -49,6 +50,10 @@ function wkhtmltopdf(input, options, callback) {
   // return stdout stream so we can pipe
   return child.stdout;
 }
+
+wkhtmltopdf.setPath = function(part) {
+  return wkhtmltopdf.command = path.join(part, 'wkhtmltopdf');
+};
 
 wkhtmltopdf.command = 'wkhtmltopdf';
 module.exports = wkhtmltopdf;
