@@ -34,6 +34,11 @@ There are [many options](http://madalgo.au.dk/~jakobt/wkhtmltoxdoc/wkhtmltopdf_0
 wkhtmltopdf.  All of the command line options are supported as documented on the page linked to above.  The
 options are camelCased instead-of-dashed as in the command line tool.
 
+You need to enclose `input` URL in "" if you have query parameters. For example: 
+```
+     var url = '"http://some_domain.ru/api?OrderId=123456&SignatureValue=789012345"';
+```
+
 There is also an `output` option that can be used to write the output directly to a filename, instead of returning
 a stream.
 

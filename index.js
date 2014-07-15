@@ -1,6 +1,11 @@
 var spawn = require('child_process').spawn;
 var slang = require('slang');
 
+// You need to enclose input URL in "" if you have query parameters
+//
+// ** For example: 
+// var url = '"http://some_domain.ru/api?OrderId=123456&SignatureValue=789012345"';
+//
 function wkhtmltopdf(input, options, callback) {
   if (!options) {
     options = {};
@@ -29,7 +34,7 @@ function wkhtmltopdf(input, options, callback) {
     }
   }
   
-  var isUrl = /^(https?|file):\/\//.test(input);
+  var isUrl = /^(\"?https?|file):\/\//.test(input);
   args.push(isUrl ? input : '-'); // stdin if HTML given directly
   args.push(output || '-');       // stdout if no output file
 
