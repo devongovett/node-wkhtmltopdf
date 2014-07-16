@@ -29,7 +29,7 @@ function wkhtmltopdf(input, options, callback) {
     }
   }
   
-  var isUrl = /^(https?|file):\/\//.test(input);
+  var isUrl = /^(\"?https?|file):\/\//.test(input);
   args.push(isUrl ? input : '-'); // stdin if HTML given directly
   args.push(output || '-');       // stdout if no output file
 
@@ -40,8 +40,9 @@ function wkhtmltopdf(input, options, callback) {
     var child = spawn('/bin/sh', ['-c', args.join(' ') + ' | cat']);
   }
 
-  if (callback)
+  if (callback){
     child.on('exit', callback);
+  }
 
   if (!isUrl)
     child.stdin.end(input);
@@ -50,5 +51,5 @@ function wkhtmltopdf(input, options, callback) {
   return child.stdout;
 }
 
-wkhtmltopdf.command = 'wkhtmltopdf';
+wkhtmltopdf.command = '/usr/local/bin/wkhtmltopdf';
 module.exports = wkhtmltopdf;
