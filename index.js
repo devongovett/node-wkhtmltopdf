@@ -15,7 +15,14 @@ function wkhtmltopdf(input, options, callback) {
   var args = [wkhtmltopdf.command, '--quiet'];
   for (var key in options) {
     var val = options[key];
-    key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
+    
+    if ('toc' === key ||
+        'cover' === key ||
+        'page' === key) {
+      key = slang.dasherize(key);
+    } else {
+      key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
+    }
     
     if (val !== false)
       args.push(key);
