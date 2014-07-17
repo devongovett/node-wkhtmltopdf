@@ -12,6 +12,9 @@ function wkhtmltopdf(input, options, callback) {
     var output = options.output;
     delete options.output;
 
+    var debugOutput = options.debugOutput;
+    delete options.debugOutput;
+
     var args = [wkhtmltopdf.command];
     for (var key in options) {
         var val = options[key];
@@ -56,9 +59,11 @@ function wkhtmltopdf(input, options, callback) {
     if (!isUrl)
         child.stdin.end(input);
 
-    child.stderr.on('data', function(data) {
-        console.log(data.toString());
-    });
+    if (debugOutput) {
+        child.stderr.on('data', function(data) {
+            console.log(data.toString());
+        });
+    }
 
     // return stdout stream so we can pipe
     return child.stdout;
