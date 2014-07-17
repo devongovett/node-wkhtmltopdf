@@ -46,7 +46,11 @@ function wkhtmltopdf(input, options, callback) {
     args.push(output || '-'); // stdout if no output file
 
     if (process.platform === 'win32') {
-        console.log(args.join(' '));
+    		
+    		if (debugOutput) {
+        	console.log(args.join(' '));
+        }
+
         var child = spawn(args[0], args.slice(1));
     } else {
         // this nasty business prevents piping problems on linux
