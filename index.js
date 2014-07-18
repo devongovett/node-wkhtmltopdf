@@ -1,6 +1,14 @@
 var spawn = require('child_process').spawn;
 var slang = require('slang');
 
+function quote(val) {
+  // escape and quote the value if it is a string and this isn't windows
+  if (typeof val === 'string' && process.platform !== 'win32')
+    val = '"' + val.replace(/(["\\$`])/g, '\\$1') + '"';
+    
+  return val;
+}
+
 function wkhtmltopdf(input, options, callback) {
   if (!options) {
     options = {};
@@ -21,11 +29,7 @@ function wkhtmltopdf(input, options, callback) {
       args.push(key);
       
     if (typeof val !== 'boolean') {
-      // escape and quote the value if it is a string
-      if (typeof val === 'string')
-        val = '"' + val.replace(/(["\\$`])/g, '\\$1') + '"';
-        
-      args.push(val);
+      args.push(quote(val));
     }
   }
   
