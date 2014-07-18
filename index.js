@@ -19,19 +19,30 @@ function wkhtmltopdf(input, options, callback) {
   
   var output = options.output;
   delete options.output;
+    
+  // make sure the special keys are last
+  var extraKeys = [];
+  var keys = Object.keys(options).filter(function(key) {
+    if (key === 'toc' || key === 'cover' || key === 'page') {
+      extraKeys.push(key);
+      return false;
+    }
+    
+    return true;
+  }).concat(extraKeys);
   
   var args = [wkhtmltopdf.command, '--quiet'];
-  for (var key in options) {
+  keys.forEach(function(key) {
     var val = options[key];
-    key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
+    if (key !== 'toc' && key !== 'cover' && key !== 'page')
+      key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
     
     if (val !== false)
       args.push(key);
       
-    if (typeof val !== 'boolean') {
+    if (typeof val !== 'boolean')
       args.push(quote(val));
-    }
-  }
+  });
   
   var isUrl = /^(https?|file):\/\//.test(input);
   args.push(isUrl ? quote(input) : '-');    // stdin if HTML given directly
