@@ -17,8 +17,11 @@ function wkhtmltopdf(input, options, callback) {
     options = {};
   }
   
-  var output = options.output;
+  var output = options.output,
+      spawnOptions = options.spawnOptions || {};
+
   delete options.output;
+  delete options.spawnOptions;
     
   // make sure the special keys are last
   var extraKeys = [];
@@ -49,10 +52,10 @@ function wkhtmltopdf(input, options, callback) {
   args.push(output ? quote(output) : '-');  // stdout if no output file
 
   if (process.platform === 'win32') {
-    var child = spawn(args[0], args.slice(1));
+    var child = spawn(args[0], args.slice(1), spawnOptions);
   } else {
     // this nasty business prevents piping problems on linux
-    var child = spawn('/bin/sh', ['-c', args.join(' ') + ' | cat']);
+    var child = spawn('/bin/sh', ['-c', args.join(' ') + ' | cat'], spawnOptions);
   }
   
   // call the callback with null error when the process exits successfully
