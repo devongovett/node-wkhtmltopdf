@@ -1,6 +1,6 @@
 {
   "name": "wkhtmltopdf",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "A wrapper for the wkhtmltopdf HTML to PDF converter using WebKit",
   "author": {
     "name": "Devon Govett",
