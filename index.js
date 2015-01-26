@@ -9,6 +9,18 @@ function quote(val) {
   return val;
 }
 
+function formatKey(key) {
+  if (key !== 'toc' && key !== 'cover' && key !== 'page')
+    return key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
+}
+
+function optionToArgArray(key, val) {
+  if (typeof val == 'boolean')
+    return val ? [formatKey(key)] : [];
+  else
+    return [formatKey(key), quote(val)];
+}
+
 function wkhtmltopdf(input, options, callback) {
   if (!options) {
     options = {};
@@ -32,16 +44,28 @@ function wkhtmltopdf(input, options, callback) {
   }).concat(extraKeys);
   
   var args = [wkhtmltopdf.command, '--quiet'];
-  keys.forEach(function(key) {
-    var val = options[key];
-    if (key !== 'toc' && key !== 'cover' && key !== 'page')
-      key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
+  keys.forEach(function(optKey) {
+    var optVal = options[optKey];
     
-    if (val !== false)
-      args.push(key);
+    if (Array.isArray(optVal)) {
+      // when optVal is an array we handle the array as a repeatable option.
+      // i.e. { allow: ['c', 'd'] } becomes --allow "c" --allow "d"
+      optVal.forEach(function(val) {
+        args = args.concat(optionToArgArray(optKey, val));
+      });
+    } else if (typeof optVal == 'object') {
+      // when optVal is an object we handle each property as argument pairs
+      // when more than one property exists we handle the properties as a repeatable option
+      // i.e. {cookie: { 'a': 'apple', 'b': 'banana'}} becomes --cookie "a" "apple" --cookie "b" "banana"
+      Object.keys(optVal).forEach(function(key) {
+        var val = optVal[key];
+        args = args.concat([formatKey(optKey), quote(key), quote(val)]);
+      });
+    } else {
+      //otherwise, optVal is a single value.
+      args = args.concat(optionToArgArray(optKey, optVal));
+    }
       
-    if (typeof val !== 'boolean')
-      args.push(quote(val));
   });
   
   var isUrl = /^(https?|file):\/\//.test(input);
