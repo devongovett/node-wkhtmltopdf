@@ -32,7 +32,13 @@ a stream that you can read from or pipe to wherever you like (e.g. a file, or an
 
 There are [many options](http://wkhtmltopdf.org/docs.html) available to
 wkhtmltopdf.  All of the command line options are supported as documented on the page linked to above.  The
-options are camelCased instead-of-dashed as in the command line tool.
+options are camelCased instead-of-dashed as in the command line tool. Repeatable options can be specified as arrays. Repeatable options of the form <name> <value> can be specified as objects with properties with corresponding name/value pairs. See the example below.
+
+```javascript
+// --page-size "letter" --allow "pathA" --allow "pathB" --cookie "User-Name" "king" --cookie "Role" "admin"
+var options = { pageSize: 'letter', allow: ['pathA', 'pathB'], cookie: { 'User-Name': 'king', 'Role': 'admin'} }
+wkhtmltopdf('http://localhost', options)
+```
 
 There is also an `output` option that can be used to write the output directly to a filename, instead of returning
 a stream.
