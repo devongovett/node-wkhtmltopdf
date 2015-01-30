@@ -21,7 +21,7 @@ function optionToArgArray(key, val) {
     return [formatKey(key), quote(val)];
 }
 
-function wkhtmltopdf(input, options, callback) {
+function wkhtmlto(command) { return function(input, options, callback) {
   if (!options) {
     options = {};
   } else if (typeof options == 'function') {
@@ -43,7 +43,7 @@ function wkhtmltopdf(input, options, callback) {
     return true;
   }).concat(extraKeys);
   
-  var args = [wkhtmltopdf.command, '--quiet'];
+  var args = [command, '--quiet'];
   keys.forEach(function(optKey) {
     var optVal = options[optKey];
     
@@ -109,7 +109,12 @@ function wkhtmltopdf(input, options, callback) {
   
   // return stdout stream so we can pipe
   return stream;
-}
+}; }
 
-wkhtmltopdf.command = 'wkhtmltopdf';
-module.exports = wkhtmltopdf;
+// For backwards compatability we make sure that the object returned is a function
+// that produces pdfs (deprecated)
+module.exports = wkhtmlto('wkhtmltopdf');
+
+// And the preferred interface is to call .pdf or .image
+module.exports.pdf = wkhtmlto('wkhtmltopdf');
+module.exports.image = wkhtmlto('wkhtmltoimage');

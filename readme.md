@@ -7,7 +7,10 @@ it converts HTML documents to PDFs using WebKit.
 ## Usage
 
 ```javascript
-var wkhtmltopdf = require('wkhtmltopdf');
+var wkhtmltopdf = require('wkhtmltopdf').pdf; 
+
+//or this works, but is deprecated
+//var wkhtmltopdf = require('wkhtmltopdf')
 
 // URL
 wkhtmltopdf('http://google.com/', { pageSize: 'letter' })
@@ -32,7 +35,7 @@ a stream that you can read from or pipe to wherever you like (e.g. a file, or an
 
 There are [many options](http://wkhtmltopdf.org/docs.html) available to
 wkhtmltopdf.  All of the command line options are supported as documented on the page linked to above.  The
-options are camelCased instead-of-dashed as in the command line tool. Repeatable options can be specified as arrays. Repeatable options of the form <name> <value> can be specified as objects with properties with corresponding name/value pairs. See the example below.
+options are camelCased instead-of-dashed as in the command line tool. Repeatable options can be specified as arrays. Repeatable options of the form `<name>` `<value>` can be specified as objects with properties with corresponding name/value pairs. See the example below.
 
 ```javascript
 // --page-size "letter" --allow "pathA" --allow "pathB" --cookie "User-Name" "king" --cookie "Role" "admin"
@@ -42,6 +45,29 @@ wkhtmltopdf('http://localhost', options)
 
 There is also an `output` option that can be used to write the output directly to a filename, instead of returning
 a stream.
+
+##wkhtmltoimage support
+
+To call the wkhtmltoimage command instead of wkhtmltopdf, you can do this:
+
+```javascript
+var wkhtmltoimage = require('wkhtmltopdf').image;
+
+//same interface!
+wkhtmltoimage('http://google.com/', { pageSize: 'letter' })
+  .pipe(fs.createWriteStream('out.jpg'));
+```
+
+Or, if you're using both wkhtmltopdf and wkhtmltoimage, consider this:
+```javascript
+var wkhtmlto = require('wkhtmltopdf');
+
+wkhtmlto.pdf('http://google.com/', { pageSize: 'letter' })
+  .pipe(fs.createWriteStream('out.pdf'));
+
+wkhtmlto.image('http://google.com/', { pageSize: 'letter' })
+  .pipe(fs.createWriteStream('out.jpg'));
+```
 
 ## Installation
 
