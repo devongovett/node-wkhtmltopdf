@@ -65,8 +65,23 @@ var wkhtmlto = require('wkhtmltopdf');
 wkhtmlto.pdf('http://google.com/', { pageSize: 'letter' })
   .pipe(fs.createWriteStream('out.pdf'));
 
-wkhtmlto.image('http://google.com/', { pageSize: 'letter' })
+wkhtmlto.image('http://google.com/')
   .pipe(fs.createWriteStream('out.jpg'));
+```
+
+##custom command support
+
+If wkhtmltopdf isn't in your path, fear not, you may supply any command you like:
+```javascript
+var wkhtmltoimage = require('wkhtmltopdf').customCommand('/my/path/to/wkhtmltopdf');
+```
+
+Once upon a time you could mutate state on the module exports to achieve similar functionality. This is still
+supported to not break compatability but you're strongly encouraged to change your code to use the customCommand 
+syntax above.
+```javascript
+// Don't do this
+//require('wkhtmltopdf').command = '/my/path/to/wkhtmltopdf'
 ```
 
 ## Installation

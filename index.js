@@ -21,7 +21,16 @@ function optionToArgArray(key, val) {
     return [formatKey(key), quote(val)];
 }
 
-function wkhtmlto(command) { return function(input, options, callback) {
+function wkhtmlto(commandStr) { return function(input, options, callback) {
+  // In older releases, a user could set alternative command using the 
+  // module.exports.command variable. The following line is to ensure backward 
+  // compatability.  However, this is considered deprecated and the user is 
+  // strongly encouraged to use module.exports.image for wkhtmltoimage. If a 
+  // custom command is needed, the user is encouraged to use 
+  // module.exports.customCommand('/my/custom/path/to/wkhtmltopdf')
+  // which accepts a command string as its first parameter.
+  command = module.exports.command ? module.exports.command : commandStr;
+
   if (!options) {
     options = {};
   } else if (typeof options == 'function') {
@@ -55,8 +64,10 @@ function wkhtmlto(command) { return function(input, options, callback) {
       });
     } else if (typeof optVal == 'object') {
       // when optVal is an object we handle each property as argument pairs
-      // when more than one property exists we handle the properties as a repeatable option
-      // i.e. {cookie: { 'a': 'apple', 'b': 'banana'}} becomes --cookie "a" "apple" --cookie "b" "banana"
+      // when more than one property exists we handle the properties as a 
+      // repeatable option
+      // i.e. {cookie: { 'a': 'apple', 'b': 'banana'}} becomes 
+      // --cookie "a" "apple" --cookie "b" "banana"
       Object.keys(optVal).forEach(function(key) {
         var val = optVal[key];
         args = args.concat([formatKey(optKey), quote(key), quote(val)]);
@@ -111,10 +122,13 @@ function wkhtmlto(command) { return function(input, options, callback) {
   return stream;
 }; }
 
-// For backwards compatability we make sure that the object returned is a function
-// that produces pdfs (deprecated)
+// For backwards compatability we make sure that the object returned is a 
+// function that produces pdfs (deprecated)
 module.exports = wkhtmlto('wkhtmltopdf');
 
 // And the preferred interface is to call .pdf or .image
 module.exports.pdf = wkhtmlto('wkhtmltopdf');
 module.exports.image = wkhtmlto('wkhtmltoimage');
+
+// Support custom commands other than wkhtmltopdf and wkhtmltoimage
+module.exports.customCommand = wkhtmlto
