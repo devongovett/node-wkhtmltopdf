@@ -9,7 +9,28 @@ function quote(val) {
   return val;
 }
 
-function wkhtmltopdf(input, options, callback) {
+function formatKey(key) {
+  if (key !== 'toc' && key !== 'cover' && key !== 'page')
+    return key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
+}
+
+function optionToArgArray(key, val) {
+  if (typeof val == 'boolean')
+    return val ? [formatKey(key)] : [];
+  else
+    return [formatKey(key), quote(val)];
+}
+
+function wkhtmlto(commandStr) { return function(input, options, callback) {
+  // In older releases, a user could set alternative command using the 
+  // module.exports.command variable. The following line is to ensure backward 
+  // compatability.  However, this is considered deprecated and the user is 
+  // strongly encouraged to use module.exports.image for wkhtmltoimage. If a 
+  // custom command is needed, the user is encouraged to use 
+  // module.exports.customCommand('/my/custom/path/to/wkhtmltopdf')
+  // which accepts a command string as its first parameter.
+  command = module.exports.command ? module.exports.command : commandStr;
+
   if (!options) {
     options = {};
   } else if (typeof options == 'function') {
@@ -31,17 +52,31 @@ function wkhtmltopdf(input, options, callback) {
     return true;
   }).concat(extraKeys);
   
-  var args = [wkhtmltopdf.command, '--quiet'];
-  keys.forEach(function(key) {
-    var val = options[key];
-    if (key !== 'toc' && key !== 'cover' && key !== 'page')
-      key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
+  var args = [command, '--quiet'];
+  keys.forEach(function(optKey) {
+    var optVal = options[optKey];
     
-    if (val !== false)
-      args.push(key);
+    if (Array.isArray(optVal)) {
+      // when optVal is an array we handle the array as a repeatable option.
+      // i.e. { allow: ['c', 'd'] } becomes --allow "c" --allow "d"
+      optVal.forEach(function(val) {
+        args = args.concat(optionToArgArray(optKey, val));
+      });
+    } else if (typeof optVal == 'object') {
+      // when optVal is an object we handle each property as argument pairs
+      // when more than one property exists we handle the properties as a 
+      // repeatable option
+      // i.e. {cookie: { 'a': 'apple', 'b': 'banana'}} becomes 
+      // --cookie "a" "apple" --cookie "b" "banana"
+      Object.keys(optVal).forEach(function(key) {
+        var val = optVal[key];
+        args = args.concat([formatKey(optKey), quote(key), quote(val)]);
+      });
+    } else {
+      //otherwise, optVal is a single value.
+      args = args.concat(optionToArgArray(optKey, optVal));
+    }
       
-    if (typeof val !== 'boolean')
-      args.push(quote(val));
   });
   
   var isUrl = /^(https?|file):\/\//.test(input);
@@ -85,7 +120,15 @@ function wkhtmltopdf(input, options, callback) {
   
   // return stdout stream so we can pipe
   return stream;
-}
+}; }
 
-wkhtmltopdf.command = 'wkhtmltopdf';
-module.exports = wkhtmltopdf;
+// For backwards compatability we make sure that the object returned is a 
+// function that produces pdfs (deprecated)
+module.exports = wkhtmlto('wkhtmltopdf');
+
+// And the preferred interface is to call .pdf or .image
+module.exports.pdf = wkhtmlto('wkhtmltopdf');
+module.exports.image = wkhtmlto('wkhtmltoimage');
+
+// Support custom commands other than wkhtmltopdf and wkhtmltoimage
+module.exports.customCommand = wkhtmlto
