@@ -27,7 +27,7 @@ wkhtmltopdf('http://google.com/', function (code, signal) {
 });
 
 // optional options for the child_process.spawn() 
-wkhtmltopdf('http://apple.com/', { output: 'out.pdf', spawnOptions: {env: {TZ: "Europe/Vienna"}}});
+wkhtmltopdf('http://apple.com/', { output: 'out.pdf', timezone: "Europe/Vienna"});
 ```
 
 `wkhtmltopdf` is just a function, which you call with either a URL or an inline HTML string, and it returns
