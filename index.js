@@ -83,9 +83,9 @@ function wkhtmltopdf(input, options, callback) {
   child.once('error', handleError);
 
   child.stderr.on('data', function(err) {
-    if (err.toString().indexOf('Warning: ' >= 0))
+    if (err.toString().indexOf('Warning: ') >= 0)
       warnings.push(err.toString());
-    else if (err.toString().indexOf('Error: ' >= 0)) {
+    else if (err.toString().indexOf('Error: ') >= 0) {
       handleError(new Error((err || '').toString().trim()));
       child.stderr.removeAllListeners('data');
     }
