@@ -54,22 +54,29 @@ function wkhtmltopdf(input, options, callback) {
     // this nasty business prevents piping problems on linux
     var child = spawn('/bin/sh', ['-c', args.join(' ') + ' | cat']);
   }
+
+  // running list of errors
+  var errors = [];
   
   // call the callback with null error when the process exits successfully
   if (callback)
-    child.on('exit', function() { callback(null); });
+    child.on('exit', function() {
+        // if we saw errors during this run, send them to callback
+        if (errors.length) {
+            callback(errors);
+        }
+        else {
+            callback(null);
+        }
+    });
     
   // setup error handling
   var stream = child.stdout;
   function handleError(err) {
-    child.removeAllListeners('exit');
-    child.kill();
-    
-    // call the callback if there is one
-    if (callback)
-      callback(err);
+    // add error to list of errors
+    errors.push(err);
       
-    // if not, or there are listeners for errors, emit the error event
+    // if no callback, or there are listeners for errors, emit the error event
     if (!callback || stream.listeners('error').length > 0)
       stream.emit('error', err);
   }
