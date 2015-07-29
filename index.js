@@ -23,7 +23,7 @@ function wkhtmltopdf(input, options, callback) {
   // make sure the special keys are last
   var extraKeys = [];
   var keys = Object.keys(options).filter(function(key) {
-    if (key === 'toc' || key === 'xslStyleSheet' || key === 'cover' || key === 'page') {
+    if (key === 'toc' || key === 'disableTocLinks' || key === 'xslStyleSheet' || key === 'cover' || key === 'page') {
       extraKeys.push(key);
       return false;
     }
