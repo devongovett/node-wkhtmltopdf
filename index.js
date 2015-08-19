@@ -39,8 +39,12 @@ function wkhtmltopdf(input, options, callback) {
     
     if (val !== false)
       args.push(key);
-      
-    if (typeof val !== 'boolean')
+
+    if(Array.isArray(val)) {
+      val.forEach(function(valPart) {
+        args.push(quote(valPart));
+      });
+    } else if (typeof val !== 'boolean')
       args.push(quote(val));
   });
   
