@@ -54,13 +54,13 @@ function wkhtmltopdf(input, options, callback) {
     // this nasty business prevents piping problems on linux
     var child = spawn('/bin/sh', ['-c', args.join(' ') + ' | cat']);
   }
-  
+  var stream = child.stdout;
   // call the callback with null error when the process exits successfully
   if (callback)
-    child.on('exit', function() { callback(null); });
+    child.on('exit', function() { callback(stream); });
     
   // setup error handling
-  var stream = child.stdout;
+
   function handleError(err) {
     child.removeAllListeners('exit');
     child.kill();
