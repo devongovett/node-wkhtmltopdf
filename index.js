@@ -20,32 +20,13 @@ function wkhtmltopdf(input, options, callback) {
   var output = options.output;
   delete options.output;
     
-  // make sure the special keys are last
-  var extraKeys = [];
-  var keys = Object.keys(options).filter(function(key) {
-    if (key === 'toc' || key === 'cover' || key === 'page') {
-      extraKeys.push(key);
-      return false;
-    }
+  try {
+    var args = [wkhtmltopdf.command, '--quiet'].concat(processOptions(options)).concat(processInput(input));
+  }
+  catch (err) {
+    emitError(err, callback, process.stderr);    
+  }
     
-    return true;
-  }).concat(extraKeys);
-  
-  var args = [wkhtmltopdf.command, '--quiet'];
-  keys.forEach(function(key) {
-    var val = options[key];
-    if (key !== 'toc' && key !== 'cover' && key !== 'page')
-      key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
-    
-    if (val !== false)
-      args.push(key);
-      
-    if (typeof val !== 'boolean')
-      args.push(quote(val));
-  });
-  
-  var isUrl = /^(https?|file):\/\//.test(input);
-  args.push(isUrl ? quote(input) : '-');    // stdin if HTML given directly
   args.push(output ? quote(output) : '-');  // stdout if no output file
 
   if (process.platform === 'win32') {
@@ -64,14 +45,7 @@ function wkhtmltopdf(input, options, callback) {
   function handleError(err) {
     child.removeAllListeners('exit');
     child.kill();
-    
-    // call the callback if there is one
-    if (callback)
-      callback(err);
-      
-    // if not, or there are listeners for errors, emit the error event
-    if (!callback || stream.listeners('error').length > 0)
-      stream.emit('error', err);
+    emitError(err, callback, stream);
   }
   
   child.once('error', handleError);
@@ -80,12 +54,127 @@ function wkhtmltopdf(input, options, callback) {
   });
   
   // write input to stdin if it isn't a url
-  if (!isUrl)
+  if (!Array.isArray(input) && !isURL(input)) {
     child.stdin.end(input);
+  }
   
   // return stdout stream so we can pipe
   return stream;
 }
 
+function emitError(err, callback, stream) {
+  // call the callback if there is one
+  if (callback)
+    callback(err);
+    
+  // if not, or there are listeners for errors, emit the error event
+  if (!callback || stream.listeners('error').length > 0)
+    stream.emit('error', err);
+}
+
 wkhtmltopdf.command = 'wkhtmltopdf';
 module.exports = wkhtmltopdf;
+
+
+function processOptions(options) {
+  
+  // make sure the special keys are last
+  var extraKeys = [];
+  var keys = Object.keys(options).filter(function(key) {
+    if (key === 'toc' || key === 'cover' || key === 'page') {
+      extraKeys.push(key);
+      return false;
+    }
+  
+    return true;
+  }).concat(extraKeys);
+
+  var opts = [];
+  
+  keys.forEach(function(key) {
+    var val = options[key];
+    if (key !== 'toc' && key !== 'cover' && key !== 'page')
+      key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
+  
+    if (val !== false)
+      opts.push(key);
+    
+    if (typeof val !== 'boolean')
+      opts.push(quote(val));
+  });
+
+  return opts;
+}
+
+function processInput(inputArgs) {
+
+  var resolvedInput = [];
+
+  if (Array.isArray(inputArgs)) {
+    resolvedInput = inputArgs.map(resolveInputObject).reduce(function(accum, val) {
+      return accum.concat(val);
+    }, []);
+  }
+  else if (isURL(inputArgs)) {
+    resolvedInput.push(quote(inputArgs));
+  }
+  else {
+    resolvedInput.push('-'); // stdin
+  }
+  
+  return resolvedInput;
+}
+
+function isURL(possibleURL) {
+    return /^(https?|file):\/\//.test(possibleURL);
+}
+
+function resolveInputObject(input) {
+    
+  var type, url, options;
+  
+  if (typeof input == 'string') {
+    if (input == 'toc') {
+      type = input;
+    }
+    else if (isURL(input)) {
+      url = input;
+    }
+  }
+  else {
+    type = input.type;
+    url = input.url;
+    if (input.options) {
+      options = processOptions(input.options);
+    }
+  }
+
+  if (!options) {
+    options = [];
+  }
+  else if (!Array.isArray(options)) {
+    throw Error("Invalid 'options' Array for page '" + url + "'");
+  }
+  
+  if (type == 'toc' && url) {
+    throw Error("URL is invalid for page type 'toc' in '" + url + "'");
+  }
+  else if (type != 'toc' && !isURL(url)) {
+    throw Error("Invalid 'url' for page: " + type + "'" + url + "'");
+  }
+  
+  if (!type) {
+    type = '';
+  }
+
+  if (!url) {
+    url = '';
+  }
+  else {
+    url = quote(url);
+  }
+  
+  return [type, url].concat(options);
+    
+}
+
