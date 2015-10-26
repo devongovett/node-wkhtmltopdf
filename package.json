@@ -17,5 +17,14 @@
     "type": "git",
     "url": "https://github.com/devongovett/node-wkhtmltopdf.git"
   },
+  "scripts": {
+    "test": "mocha -R spec"
+  },
+  "devDependencies": {
+    "mocha": "~2.2.5",
+    "rewire": "~2.3.4"
+  },
+
   "bugs": "http://github.com/devongovett/node-wkhtmltopdf/issues"
+
 }
