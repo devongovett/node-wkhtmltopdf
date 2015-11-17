@@ -1,4 +1,4 @@
-node-wkhtmltopdf
+node-wkhtmltopdf [![Build Status](https://travis-ci.org/tepez/node-wkhtmltopdf.svg)](https://travis-ci.org/tepez/node-wkhtmltopdf)
 ================
 
 A Node.js wrapper for the [wkhtmltopdf](http://wkhtmltopdf.org/) command line tool.  As the name implies, 
