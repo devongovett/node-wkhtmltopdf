@@ -48,18 +48,18 @@ function wkhtmltopdf(input, options, callback) {
   args.push(isUrl ? quote(input) : '-');    // stdin if HTML given directly
   args.push(output ? quote(output) : '-');  // stdout if no output file
 
+  var child,
+    stderrMessages = [];
+
   if (process.platform === 'win32') {
-    var child = spawn(args[0], args.slice(1));
+    child = spawn(args[0], args.slice(1));
   } else {
     // this nasty business prevents piping problems on linux
-    var child = spawn('/bin/sh', ['-c', args.join(' ') + ' | cat']);
+    // The return code should be that of wkhtmltopdf and not of cat
+    // http://stackoverflow.com/a/18295541/1705056
+    child = spawn('/bin/bash', ['-c', args.join(' ') + ' | cat ; exit ${PIPESTATUS[0]}']);
   }
-  
-  // call the callback with null error when the process exits successfully
-  if (callback)
-    child.on('exit', function() { callback(null); });
-    
-  // setup error handling
+
   var stream = child.stdout;
   function handleError(err) {
     child.removeAllListeners('exit');
@@ -73,10 +73,21 @@ function wkhtmltopdf(input, options, callback) {
     if (!callback || stream.listeners('error').length > 0)
       stream.emit('error', err);
   }
-  
+
+  child.on('exit', function(code) {
+    if (code !== 0) {
+      // join all stderr messages into an error when the process exists with an error
+      handleError(new Error(stderrMessages.join('\n') || ('wkhtmltopdf exited with code ' + code)));
+    } else if (callback) {
+      // call the callback with null error when the process exits successfully
+      callback(null);
+    }
+  });
+
+  // setup error handling
   child.once('error', handleError);
-  child.stderr.once('data', function(err) {
-    handleError(new Error((err || '').toString().trim()));
+  child.stderr.on('data', function(err) {
+    stderrMessages.push((err || '').toString());
   });
   
   // write input to stdin if it isn't a url
