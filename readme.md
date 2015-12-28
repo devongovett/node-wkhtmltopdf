@@ -16,8 +16,6 @@ wkhtmltopdf's package maintainer suggests the warning message is harmless and an
 
 ## Usage
 
-API
-
 ### wkhtmltopdf(source, [options], [callback]);
 
 ```javascript
