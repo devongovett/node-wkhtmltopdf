@@ -34,6 +34,9 @@ function wkhtmltopdf(input, options, callback) {
   var args = [wkhtmltopdf.command, '--quiet'];
   keys.forEach(function(key) {
     var val = options[key];
+    if (key === 'ignore') { // skip adding the ignore key
+      return false;
+    }
     if (key !== 'toc' && key !== 'cover' && key !== 'page')
       key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
     
@@ -62,6 +65,21 @@ function wkhtmltopdf(input, options, callback) {
   // setup error handling
   var stream = child.stdout;
   function handleError(err) {
+    // check ignore warnings array before killing child
+    if (options.ignore && options.ignore instanceof Array) {
+      var ignoreError = false;
+      options.ignore.forEach(function(opt) {
+        if (typeof opt === 'string' && opt === err.message) {
+          ignoreError = true;
+        }
+        if (opt instanceof RegExp && err.message.match(opt)) {
+          ignoreError = true;
+        }
+      });
+      if (ignoreError) {
+        return true;
+      }
+    }
     child.removeAllListeners('exit');
     child.kill();
     
