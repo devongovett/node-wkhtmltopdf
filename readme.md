@@ -4,16 +4,6 @@ node-wkhtmltopdf
 A Node.js wrapper for the [wkhtmltopdf](http://wkhtmltopdf.org/) command line tool.  As the name implies, 
 it converts HTML documents to PDFs using WebKit.
 
-Code adopted from [Devon Govett](https://github.com/devongovett/node-wkhtmltopdf)'s project
-
-## Changes
-
-`options.ignore` Array to ignore any warnings that wkhtmltopdf writes to stderr.
-
-wkhtmltopdf often prints to stderr the warning message `QFont::setPixelSize: Pixel size <= 0 (0)`
-
-wkhtmltopdf's package maintainer suggests the warning message is harmless and an [upstream issue](https://github.com/wkhtmltopdf/wkhtmltopdf/issues/2124).
-
 ## Usage
 
 ### wkhtmltopdf(source, [options], [callback]);
