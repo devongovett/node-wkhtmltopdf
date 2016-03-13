@@ -45,6 +45,10 @@ function wkhtmltopdf(input, options, callback) {
       
     if (typeof val !== 'boolean')
       args.push(quote(val));
+
+    if (key === '--quiet' && val === false) {
+      args.splice(args.indexOf(key), 1);
+    }
   });
   
   var isUrl = /^(https?|file):\/\//.test(input);
@@ -58,9 +62,11 @@ function wkhtmltopdf(input, options, callback) {
     var child = spawn('/bin/sh', ['-c', args.join(' ') + ' | cat']);
   }
   
+  var warnings = [];
+
   // call the callback with null error when the process exits successfully
   if (callback)
-    child.on('exit', function() { callback(null); });
+    child.on('exit', function() { callback(null, null, warnings); });
     
   // setup error handling
   var stream = child.stdout;
@@ -93,8 +99,14 @@ function wkhtmltopdf(input, options, callback) {
   }
   
   child.once('error', handleError);
-  child.stderr.once('data', function(err) {
-    handleError(new Error((err || '').toString().trim()));
+
+  child.stderr.on('data', function(err) {
+    if (err.toString().indexOf('Warning: ') >= 0)
+      warnings.push(err.toString());
+    else if (err.toString().indexOf('Error: ') >= 0) {
+      handleError(new Error((err || '').toString().trim()));
+      child.stderr.removeAllListeners('data');
+    }
   });
   
   // write input to stdin if it isn't a url
