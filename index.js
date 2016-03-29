@@ -37,14 +37,18 @@ function wkhtmltopdf(input, options, callback) {
     if (key === 'ignore') { // skip adding the ignore key
       return false;
     }
-    if (key !== 'toc' && key !== 'cover' && key !== 'page')
+
+    if (key !== 'toc' && key !== 'cover' && key !== 'page') {
       key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
+    }
     
-    if (val !== false)
+    if (val !== false) {
       args.push(key);
+    }
       
-    if (typeof val !== 'boolean')
+    if (typeof val !== 'boolean') {
       args.push(quote(val));
+    }
   });
   
   var isUrl = /^(https?|file):\/\//.test(input);
@@ -59,8 +63,9 @@ function wkhtmltopdf(input, options, callback) {
   }
   
   // call the callback with null error when the process exits successfully
-  if (callback)
+  if (callback) {
     child.on('exit', function() { callback(null); });
+  }
     
   // setup error handling
   var stream = child.stdout;
@@ -84,12 +89,14 @@ function wkhtmltopdf(input, options, callback) {
     child.kill();
     
     // call the callback if there is one
-    if (callback)
+    if (callback) {
       callback(err);
+    }
       
     // if not, or there are listeners for errors, emit the error event
-    if (!callback || stream.listeners('error').length > 0)
+    if (!callback || stream.listeners('error').length > 0) {
       stream.emit('error', err);
+    }
   }
   
   child.once('error', handleError);
@@ -98,11 +105,16 @@ function wkhtmltopdf(input, options, callback) {
   });
   
   // write input to stdin if it isn't a url
-  if (!isUrl)
+  if (!isUrl) {
     child.stdin.end(input);
+  }
   
   // return stdout stream so we can pipe
-  return stream;
+  if (callback) {
+    return callback(null, stream);
+  } else {
+    return stream;
+  }
 }
 
 wkhtmltopdf.command = 'wkhtmltopdf';
