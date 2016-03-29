@@ -1,4 +1,4 @@
-node-wkhtmltopdf
+node-wkhtmltopdf [![Build Status](https://travis-ci.org/tepez/node-wkhtmltopdf.svg)](https://travis-ci.org/tepez/node-wkhtmltopdf)
 ================
 
 A Node.js wrapper for the [wkhtmltopdf](http://wkhtmltopdf.org/) command line tool.  As the name implies, 
@@ -62,7 +62,14 @@ Finally, to install the node module, use `npm`:
     
 Be sure `wkhtmltopdf` is in your PATH when you're done installing.  If you don't want to do this for some reason, you can change
 the `wkhtmltopdf.command` property to the path to the `wkhtmltopdf` command line tool.
-    
+
+
+## Tests
+
+Run `npm test` and manually check that generated files are like the expected files. The test suit prints the paths of the files that needs to be compared.
+
+**TODO** - Find a way to automatically compare the PDF files.
+
 ## License
 
 MIT
