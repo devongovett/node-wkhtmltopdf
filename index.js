@@ -30,6 +30,21 @@ function wkhtmltopdf(input, options, callback) {
     
     return true;
   }).concat(extraKeys);
+
+  // make sure toc specific args appear after toc arg
+  if(keys.find(function(key){return key === 'toc'})) {
+    var tocArgs = ['disableDottedLines', 'tocHeaderText', 'tocLevelIndentation', 'disableTocLinks', 'tocTextSizeShrink', 'xslStyleSheet'];
+    var myTocArgs = [];
+    keys = keys.filter(function(key){
+      if(tocArgs.find(function(tkey){ return tkey === key })) {
+        myTocArgs.push(key);
+        return false;
+      }
+      return true;
+    });
+    var spliceArgs = [keys.indexOf('toc')+1, 0].concat(myTocArgs);
+    Array.prototype.splice.apply(keys, spliceArgs);
+  }
   
   var args = [wkhtmltopdf.command, '--quiet'];
   keys.forEach(function(key) {
