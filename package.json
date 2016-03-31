@@ -17,5 +17,14 @@
     "type": "git",
     "url": "https://github.com/devongovett/node-wkhtmltopdf.git"
   },
-  "bugs": "http://github.com/devongovett/node-wkhtmltopdf/issues"
+  "scripts": {
+    "test": "jasmine"
+  },
+  "bugs": "http://github.com/devongovett/node-wkhtmltopdf/issues",
+  "devDependencies": {
+    "express": "^4.13.3",
+    "jasmine": "^2.3.2",
+    "mkdirp": "^0.5.1",
+    "rimraf": "^2.4.3"
+  }
 }
