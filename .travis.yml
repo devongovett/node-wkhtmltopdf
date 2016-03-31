@@ -1,0 +1,11 @@
+sudo: required
+before_install:
+  - wget http://download.gna.org/wkhtmltopdf/0.12/0.12.2.1/wkhtmltox-0.12.2.1_linux-precise-amd64.deb # http://wkhtmltopdf.org/downloads.html, travis uses ubuntu 12.04 http://docs.travis-ci.com/user/installing-dependencies/#Installing-Ubuntu-packages
+  - sudo dpkg -i wkhtmltox-0.12.2.1_linux-precise-amd64.deb || echo "That is okay that there are errors in the command"
+  - sudo apt-get -f -y install
+language: node_js
+node_js:
+  - 0.10
+  - 0.12
+  - 4
+  - 5
