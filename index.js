@@ -53,15 +53,18 @@ function wkhtmltopdf(input, options, callback) {
       return false;
     }
     if (key === 'headerHtml' || key === 'footerHtml') {
-      key = '--' + slang.dasherize(key);
-      args.push(key);
+      key = '--' + slang.dasherize(key);      
       if (Array.isArray(val)) {
         val.forEach(function(valPart) {
+          args.push(key);
           args.push(valPart);
         })
       }
-      else
+      else {
+        args.push(key);
         args.push(quote(val));
+      }
+        
       return false;   
     }
     
