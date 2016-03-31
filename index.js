@@ -21,69 +21,63 @@ function wkhtmltopdf(input, options, callback) {
   delete options.output;
     
   // make sure the special keys are last
-  var extraKeys = [];
-  var keys = Object.keys(options).filter(function(key) {
-    if (key === 'toc' || key === 'cover' || key === 'page') {
-      extraKeys.push(key);
-      return false;
-    }
-    
-    return true;
-  }).concat(extraKeys);
+  var args = [wkhtmltopdf.command, '--quiet'];
 
-  // make sure toc specific args appear after toc arg
-  if(keys.find(function(key){return key === 'toc'})) {
-    var tocArgs = ['disableDottedLines', 'tocHeaderText', 'tocLevelIndentation', 'disableTocLinks', 'tocTextSizeShrink', 'xslStyleSheet'];
-    var myTocArgs = [];
-    keys = keys.filter(function(key){
-      if(tocArgs.find(function(tkey){ return tkey === key })) {
-        myTocArgs.push(key);
+  if (options.rawArgs && options.rawArgs.length) {
+    options.rawArgs.forEach(function(arg) {
+      args.push(arg);
+    });
+  }
+  else {
+    var extraKeys = [];
+    var keys = Object.keys(options).filter(function(key) {
+      if (key === 'toc' || key === 'cover' || key === 'page') {
+        extraKeys.push(key);
         return false;
       }
+      
       return true;
-    });
-    var spliceArgs = [keys.indexOf('toc')+1, 0].concat(myTocArgs);
-    Array.prototype.splice.apply(keys, spliceArgs);
-  }
-  
-  var args = [wkhtmltopdf.command, '--quiet'];
-  keys.forEach(function(key) {
-    var val = options[key];
-    if (key === 'ignore') { // skip adding the ignore key
-      return false;
+    }).concat(extraKeys);
+
+    // make sure toc specific args appear after toc arg
+    if(keys.find(function(key){return key === 'toc'})) {
+      var tocArgs = ['disableDottedLines', 'tocHeaderText', 'tocLevelIndentation', 'disableTocLinks', 'tocTextSizeShrink', 'xslStyleSheet'];
+      var myTocArgs = [];
+      keys = keys.filter(function(key){
+        if(tocArgs.find(function(tkey){ return tkey === key })) {
+          myTocArgs.push(key);
+          return false;
+        }
+        return true;
+      });
+      var spliceArgs = [keys.indexOf('toc')+1, 0].concat(myTocArgs);
+      Array.prototype.splice.apply(keys, spliceArgs);
     }
-    if (key === 'headerHtml' || key === 'footerHtml') {
-      key = '--' + slang.dasherize(key);      
-      if (Array.isArray(val)) {
-        val.forEach(function(valPart) {
-          args.push(key);
-          args.push(quote(valPart));
-        })
+    
+    keys.forEach(function(key) {
+      var val = options[key];
+      if (key === 'ignore') { // skip adding the ignore key
+        return false;
       }
-      else {
+          
+      if (key !== 'toc' && key !== 'cover' && key !== 'page') {
+        key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
+      }
+      
+      if (val !== false) {
         args.push(key);
-        args.push(quote(val));
       }
         
-      return false;   
-    }
-    
-    if (key !== 'toc' && key !== 'cover' && key !== 'page') {
-      key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
-    }
-    
-    if (val !== false) {
-      args.push(key);
-    }
-      
-    if (Array.isArray(val)) {
-      val.forEach(function(valPart) {
-        args.push(quote(valPart));
-      });
-    } else if (typeof val !== 'boolean') {
-      args.push(quote(val));
-    }
-  });
+      if (Array.isArray(val)) {
+        val.forEach(function(valPart) {
+          args.push(quote(valPart));
+        });
+      } else if (typeof val !== 'boolean') {
+        args.push(quote(val));
+      }
+    });  
+  } 
+  
   
   var isUrl = /^(https?|file):\/\//.test(input);
   args.push(isUrl ? quote(input) : '-');    // stdin if HTML given directly
