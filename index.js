@@ -75,14 +75,11 @@ function wkhtmltopdf(input, options, callback) {
       } else if (typeof val !== 'boolean') {
         args.push(quote(val));
       }
-    });  
+    });
+    var isUrl = /^(https?|file):\/\//.test(input);
+    args.push(isUrl ? quote(input) : '-');    // stdin if HTML given directly
+    args.push(output ? quote(output) : '-');  // stdout if no output file  
   } 
-  
-  
-  var isUrl = /^(https?|file):\/\//.test(input);
-  args.push(isUrl ? quote(input) : '-');    // stdin if HTML given directly
-  args.push(output ? quote(output) : '-');  // stdout if no output file
-
   if (process.platform === 'win32') {
     var child = spawn(args[0], args.slice(1));
   } else {
