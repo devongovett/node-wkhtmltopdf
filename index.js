@@ -25,7 +25,7 @@ function wkhtmltopdf(input, options, callback) {
 
   if (options.rawArgs && options.rawArgs.length) {
     options.rawArgs.forEach(function(arg) {
-      args.push(arg);
+      args.push(quote(arg));
     });
   }
   else {
