@@ -57,7 +57,7 @@ function wkhtmltopdf(input, options, callback) {
       if (Array.isArray(val)) {
         val.forEach(function(valPart) {
           args.push(key);
-          args.push(valPart);
+          args.push(quote(valPart));
         })
       }
       else {
