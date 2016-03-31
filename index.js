@@ -52,7 +52,19 @@ function wkhtmltopdf(input, options, callback) {
     if (key === 'ignore') { // skip adding the ignore key
       return false;
     }
-
+    if (key === 'headerHtml' || key === 'footerHtml') {
+      key = '--' + slang.dasherize(key);
+      args.push(key);
+      if (Array.isArray(val)) {
+        val.forEach(function(valPart) {
+          args.push(valPart);
+        })
+      }
+      else
+        args.push(quote(val));
+      return false;   
+    }
+    
     if (key !== 'toc' && key !== 'cover' && key !== 'page') {
       key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
     }
