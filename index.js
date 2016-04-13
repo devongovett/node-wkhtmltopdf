@@ -32,11 +32,11 @@ function wkhtmltopdf(input, options, callback) {
   }).concat(extraKeys);
 
   // make sure toc specific args appear after toc arg
-  if(keys.find(function(key){return key === 'toc'})) {
+  if (keys.find(function(key){return key === 'toc'})) {
     var tocArgs = ['disableDottedLines', 'tocHeaderText', 'tocLevelIndentation', 'disableTocLinks', 'tocTextSizeShrink', 'xslStyleSheet'];
     var myTocArgs = [];
     keys = keys.filter(function(key){
-      if(tocArgs.find(function(tkey){ return tkey === key })) {
+      if (tocArgs.find(function(tkey){ return tkey === key })) {
         myTocArgs.push(key);
         return false;
       }
@@ -78,49 +78,64 @@ function wkhtmltopdf(input, options, callback) {
     var child = spawn(args[0], args.slice(1));
   } else {
     // this nasty business prevents piping problems on linux
-    var child = spawn('/bin/sh', ['-c', args.join(' ') + ' | cat']);
+    var child = spawn('/bin/sh', ['-c', args.join(' ') + ' | cat; ; exit ${PIPESTATUS[0]}']);
   }
   
   // call the callback with null error when the process exits successfully
-  if (callback) {
-    child.on('exit', function() { callback(null); });
-  }
+  child.on('exit', function(code) {
+    if (code !== 0 && stderrMessages.length > 0) {
+      handleError(stderrMessages);
+    } else if (callback) {
+      callback(null, stream); // stream is child.stdout
+    }
+  });
     
   // setup error handling
+  var stderrMessages = [];
   var stream = child.stdout;
   function handleError(err) {
-    // check ignore warnings array before killing child
-    if (options.ignore && options.ignore instanceof Array) {
-      var ignoreError = false;
-      options.ignore.forEach(function(opt) {
-        if (typeof opt === 'string' && opt === err.message) {
-          ignoreError = true;
+    var errObj = null;
+    if (Array.isArray(err)) {
+      // check ignore warnings array before killing child
+      if (options.ignore && options.ignore instanceof Array) {
+        var ignoreError = false;
+        options.ignore.forEach(function(opt) {
+          err.forEach(function(error) {
+            if (typeof opt === 'string' && opt === error) {
+              ignoreError = true;
+            }
+            if (opt instanceof RegExp && error.match(opt)) {
+              ignoreError = true;
+            }
+          });
+        });
+        if (ignoreError) {
+          return true;
         }
-        if (opt instanceof RegExp && err.message.match(opt)) {
-          ignoreError = true;
-        }
-      });
-      if (ignoreError) {
-        return true;
       }
+      errObj = new Error(err.join('\n'))
+    } else if (err) {
+      errObj =  new Error(err);
     }
     child.removeAllListeners('exit');
     child.kill();
-    
     // call the callback if there is one
+
     if (callback) {
-      callback(err);
+      callback(errObj);
     }
-      
+
     // if not, or there are listeners for errors, emit the error event
     if (!callback || stream.listeners('error').length > 0) {
-      stream.emit('error', err);
+      stream.emit('error', errObj);
     }
   }
   
-  child.once('error', handleError);
+  child.once('error', function(err) {
+    throw new Error(err); // critical error
+  });
   child.stderr.once('data', function(err) {
-    handleError(new Error((err || '').toString().trim()));
+    stderrMessages.push((err || '').toString());
   });
   
   // write input to stdin if it isn't a url
@@ -129,11 +144,7 @@ function wkhtmltopdf(input, options, callback) {
   }
   
   // return stdout stream so we can pipe
-  if (callback) {
-    return callback(null, stream);
-  } else {
-    return stream;
-  }
+  return stream;
 }
 
 wkhtmltopdf.command = 'wkhtmltopdf';
