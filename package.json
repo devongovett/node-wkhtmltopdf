@@ -11,6 +11,7 @@
     "node": ">=0.6"
   },
   "dependencies": {
+    "is-stream": "^1.0.1",
     "slang": ">=0.2"
   },
   "repository": {

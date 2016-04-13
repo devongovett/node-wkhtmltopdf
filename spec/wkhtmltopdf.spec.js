@@ -80,4 +80,14 @@ describe('wkhtmltopdf', function() {
     });
   });
 
+  describe('when input is a stream', function() {
+    it('should use it as the source', function(done) {
+      Wkhtmltopdf(Fs.createReadStream(fixturePath('validFile.html')), function(err) {
+        expect(err).toBeNull();
+        checkResults('streamSourceSpec.pdf', 'validFile.pdf');
+        done();
+      }).pipe(Fs.createWriteStream(resultPath('streamSourceSpec.pdf')));
+    });
+  });
+
 });
