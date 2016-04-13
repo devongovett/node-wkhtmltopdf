@@ -1,5 +1,6 @@
 var spawn = require('child_process').spawn;
 var slang = require('slang');
+var _ = require('underscore');
 
 function quote(val) {
   // escape and quote the value if it is a string and this isn't windows
@@ -40,11 +41,11 @@ function wkhtmltopdf(input, options, callback) {
     }).concat(extraKeys);
 
     // make sure toc specific args appear after toc arg
-    if(keys.find(function(key){return key === 'toc'})) {
+    if(_.find(keys, function(key){return key === 'toc'})) {
       var tocArgs = ['disableDottedLines', 'tocHeaderText', 'tocLevelIndentation', 'disableTocLinks', 'tocTextSizeShrink', 'xslStyleSheet'];
       var myTocArgs = [];
       keys = keys.filter(function(key){
-        if(tocArgs.find(function(tkey){ return tkey === key })) {
+        if(_.find(tocArgs, function(tkey){ return tkey === key })) {
           myTocArgs.push(key);
           return false;
         }
