@@ -18,7 +18,10 @@ wkhtmltopdf('http://google.com/', { pageSize: 'letter' })
 // HTML
 wkhtmltopdf('<h1>Test</h1><p>Hello world</p>')
   .pipe(res);
-  
+
+// Stream
+wkhtmltopdf(fs.createReadStream('file.html'));
+
 // output to a file directly
 wkhtmltopdf('http://apple.com/', { output: 'out.pdf' });
 
