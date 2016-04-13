@@ -33,7 +33,7 @@ function wkhtmltopdf(input, options, callback) {
   }).concat(extraKeys);
 
   // make sure toc specific args appear after toc arg
-  if(keys.find(function(key){return key === 'toc'})) {
+  if(keys.indexOf('toc') >= 0) {
     var tocArgs = ['disableDottedLines', 'tocHeaderText', 'tocLevelIndentation', 'disableTocLinks', 'tocTextSizeShrink', 'xslStyleSheet'];
     var myTocArgs = [];
     keys = keys.filter(function(key){
