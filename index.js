@@ -142,6 +142,18 @@ function wkhtmltopdf(input, options, callback) {
   child.stderr.once('data', function(err) {
     stderrMessages.push((err || '').toString());
   });
+  
+  child.stderr.on('data', function(data) {
+    if(options.debug){
+      console.log(data.toString());
+    }
+  });
+  
+  child.stdout.on('data', function(data) {
+    if(options.debug){
+      console.log(data.toString());
+    }
+  });
 
   // write input to stdin if it isn't a url
   if (!isUrl) {
