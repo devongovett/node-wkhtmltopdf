@@ -144,13 +144,13 @@ function wkhtmltopdf(input, options, callback) {
   });
   
   child.stderr.on('data', function(data) {
-    if(options.debug){
+    if (options.debug) {
       console.log(data.toString());
     }
   });
   
   child.stdout.on('data', function(data) {
-    if(options.debug){
+    if (options.debug) {
       console.log(data.toString());
     }
   });
