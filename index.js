@@ -4,8 +4,9 @@ var isStream = require('is-stream');
 
 function quote(val) {
   // escape and quote the value if it is a string and this isn't windows
-  if (typeof val === 'string' && process.platform !== 'win32')
+  if (typeof val === 'string' && process.platform !== 'win32') {
     val = '"' + val.replace(/(["\\$`])/g, '\\$1') + '"';
+  }
 
   return val;
 }
@@ -33,7 +34,7 @@ function wkhtmltopdf(input, options, callback) {
   }).concat(extraKeys);
 
   // make sure toc specific args appear after toc arg
-  if(keys.indexOf('toc') >= 0) {
+  if (keys.indexOf('toc') >= 0) {
     var tocArgs = ['disableDottedLines', 'tocHeaderText', 'tocLevelIndentation', 'disableTocLinks', 'tocTextSizeShrink', 'xslStyleSheet'];
     var myTocArgs = [];
     keys = keys.filter(function(key){
@@ -58,16 +59,25 @@ function wkhtmltopdf(input, options, callback) {
       key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
     }
 
-    if (val !== false) {
-      args.push(key);
-    }
-
-    if (Array.isArray(val)) {
-      val.forEach(function(valPart) {
-        args.push(quote(valPart));
+    if (Array.isArray(val)) { // add repeatable args
+      val.forEach(function(valueStr) {
+        args.push(key);
+        if (Array.isArray(valueStr)) { // if repeatable args has key/value pair
+          valueStr.forEach(function(keyOrValueStr) {
+            args.push(quote(keyOrValueStr));
+          });
+        } else {
+          args.push(quote(valueStr));
+        }
       });
-    } else if (typeof val !== 'boolean') {
-      args.push(quote(val));
+    } else { // add normal args
+      if (val !== false) {
+        args.push(key);
+      }
+
+      if (typeof val !== 'boolean') {
+        args.push(quote(val));
+      }
     }
   });
 
@@ -77,7 +87,7 @@ function wkhtmltopdf(input, options, callback) {
 
   // show the command that is being run if debug opion is passed
   if (options.debug) {
-    console.log('wkhtmltopdf running command: ' + args.join(' '));
+    console.log('[node-wkhtmltopdf] [debug] [command] ' + args.join(' '));
   }
 
   if (process.platform === 'win32') {
@@ -147,7 +157,7 @@ function wkhtmltopdf(input, options, callback) {
   child.stderr.on('data', function(err) {
     stderrMessages.push((err || '').toString());
     if (options.debug) {
-      console.log('[node-wkhtmltopdf] [debug]' + data.toString());
+      console.log('[node-wkhtmltopdf] [debug] ' + data.toString());
     }
   });
   
