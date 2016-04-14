@@ -44,12 +44,18 @@ wkhtmltopdf('http://apple.com/', {
 `wkhtmltopdf` is just a function, which you call with either a URL or an inline HTML string, and it returns
 a stream that you can read from or pipe to wherever you like (e.g. a file, or an HTTP response).
 
+## Options
+
 There are [many options](http://wkhtmltopdf.org/docs.html) available to
 wkhtmltopdf.  All of the command line options are supported as documented on the page linked to above.  The
-options are camelCased instead-of-dashed as in the command line tool.
+options are camelCased instead-of-dashed as in the command line tool. Note that options that do not have values, must be specified as a boolean, e.g. **debugJavascript: true**
 
 There is also an `output` option that can be used to write the output directly to a filename, instead of returning
 a stream.
+
+### Debug Options
+
+Apart from the **debugJavascript** option from wkhtmltopdf, there is an additional options **debug** and **debugStdOut** which will help you debug rendering issues, by outputting data to console
 
 ## Installation
 
