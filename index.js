@@ -50,7 +50,7 @@ function wkhtmltopdf(input, options, callback) {
   var args = [wkhtmltopdf.command, '--quiet'];
   keys.forEach(function(key) {
     var val = options[key];
-    if (key === 'ignore') { // skip adding the ignore key
+    if (key === 'ignore' || key === 'debug') { // skip adding the ignore/debug keys
       return false;
     }
 
