@@ -50,7 +50,7 @@ function wkhtmltopdf(input, options, callback) {
   var args = [wkhtmltopdf.command, '--quiet'];
   keys.forEach(function(key) {
     var val = options[key];
-    if (key === 'ignore' || key === 'debug') { // skip adding the ignore/debug keys
+    if (key === 'ignore' || key === 'debug' || key === 'debugStdOut') { // skip adding the ignore/debug keys
       return false;
     }
 
@@ -155,7 +155,7 @@ function wkhtmltopdf(input, options, callback) {
   });
   
   child.stdout.on('data', function(data) {
-    if (options.debug) {
+    if (options.debugStdOut) {
       console.log(data.toString());
     }
   });
