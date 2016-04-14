@@ -144,19 +144,16 @@ function wkhtmltopdf(input, options, callback) {
     throw new Error(err); // critical error
   });
 
-  child.stderr.once('data', function(err) {
+  child.stderr.on('data', function(err) {
     stderrMessages.push((err || '').toString());
-  });
-  
-  child.stderr.on('data', function(data) {
     if (options.debug) {
-      console.log(data.toString());
+      console.log('[node-wkhtmltopdf] [debug]' + data.toString());
     }
   });
   
   child.stdout.on('data', function(data) {
     if (options.debugStdOut) {
-      console.log(data.toString());
+      console.log('[node-wkhtmltopdf] [debugStdOut] ' + data.toString());
     }
   });
 
