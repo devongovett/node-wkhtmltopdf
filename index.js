@@ -50,7 +50,7 @@ function wkhtmltopdf(input, options, callback) {
   var args = [wkhtmltopdf.command, '--quiet'];
   keys.forEach(function(key) {
     var val = options[key];
-    if (key === 'ignore') { // skip adding the ignore key
+    if (key === 'ignore' || key === 'debug' || key === 'debugStdOut') { // skip adding the ignore/debug keys
       return false;
     }
 
@@ -74,6 +74,11 @@ function wkhtmltopdf(input, options, callback) {
   var isUrl = /^(https?|file):\/\//.test(input);
   args.push(isUrl ? quote(input) : '-');    // stdin if HTML given directly
   args.push(output ? quote(output) : '-');  // stdout if no output file
+
+  // show the command that is being run if debug opion is passed
+  if (options.debug) {
+    console.log('wkhtmltopdf running command: ' + args.join(' '));
+  }
 
   if (process.platform === 'win32') {
     var child = spawn(args[0], args.slice(1));
@@ -141,6 +146,18 @@ function wkhtmltopdf(input, options, callback) {
 
   child.stderr.once('data', function(err) {
     stderrMessages.push((err || '').toString());
+  });
+  
+  child.stderr.on('data', function(data) {
+    if (options.debug) {
+      console.log(data.toString());
+    }
+  });
+  
+  child.stdout.on('data', function(data) {
+    if (options.debugStdOut) {
+      console.log(data.toString());
+    }
   });
 
   // write input to stdin if it isn't a url
