@@ -75,6 +75,11 @@ function wkhtmltopdf(input, options, callback) {
   args.push(isUrl ? quote(input) : '-');    // stdin if HTML given directly
   args.push(output ? quote(output) : '-');  // stdout if no output file
 
+  // show the command that is being run if debug opion is passed
+  if (options.debug) {
+    console.log('wkhtmltopdf running command: ' + args.join(' '));
+  }
+
   if (process.platform === 'win32') {
     var child = spawn(args[0], args.slice(1));
   } else {
