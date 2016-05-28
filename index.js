@@ -154,8 +154,8 @@ function wkhtmltopdf(input, options, callback) {
     throw new Error(err); // critical error
   });
 
-  child.stderr.on('data', function(err) {
-    stderrMessages.push((err || '').toString());
+  child.stderr.on('data', function(data) {
+    stderrMessages.push((data || '').toString());
     if (options.debug) {
       console.log('[node-wkhtmltopdf] [debug] ' + data.toString());
     }
