@@ -4,6 +4,21 @@ node-wkhtmltopdf [![Build Status](https://travis-ci.org/devongovett/node-wkhtmlt
 A Node.js wrapper for the [wkhtmltopdf](http://wkhtmltopdf.org/) command line tool.  As the name implies, 
 it converts HTML documents to PDFs using WebKit.
 
+## Installation
+
+First, you need to install the `wkhtmltopdf` command line tool on your system.
+
+The **easiest way** to do this is to
+[download](http://wkhtmltopdf.org/downloads.html#stable) a prebuilt version for your system.  **DO NOT** try to use
+the packages provided by your distribution as they may not be using a patched Qt and have missing features.
+
+Finally, to install the node module, use `npm`:
+
+    npm install wkhtmltopdf
+    
+Be sure the `wkhtmltopdf` command line tool is in your PATH when you're done installing.  If you don't want to do this for some reason, you can change
+the `require('wkhtmltopdf').command` property to the path to the `wkhtmltopdf` command line tool.
+
 ## Usage
 
 ### wkhtmltopdf(source, [options], [callback]);
@@ -65,21 +80,7 @@ a stream.
 
 ### Debug Options
 
-Apart from the **debugJavascript** option from wkhtmltopdf, there is an additional options **debug** and **debugStdOut** which will help you debug rendering issues, by outputting data to console
-
-## Installation
-
-First, you need to install the wkhtmltopdf command line tool on your system.  The easiest way to do this is to
-[download](http://wkhtmltopdf.org/downloads.html#stable) a prebuilt version for your system.  Don't try to use
-the packages provided by your distribution as they may not be using a patched Qt and have missing features.
-
-Finally, to install the node module, use `npm`:
-
-    npm install wkhtmltopdf
-    
-Be sure `wkhtmltopdf` is in your PATH when you're done installing.  If you don't want to do this for some reason, you can change
-the `wkhtmltopdf.command` property to the path to the `wkhtmltopdf` command line tool.
-
+Apart from the **debugJavascript** option from wkhtmltopdf, there is an additional options **debug** and **debugStdOut** which will help you debug rendering issues, by outputting data to the console. **debug** prints and **stderr** messages while **debugStdOut** prints any **stdout** warning messages.
 
 ## Tests
 
