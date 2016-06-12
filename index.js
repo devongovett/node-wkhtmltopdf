@@ -92,6 +92,8 @@ function wkhtmltopdf(input, options, callback) {
 
   if (process.platform === 'win32') {
     var child = spawn(args[0], args.slice(1));
+  } else if (process.platform === 'darwin') {
+    var child = spawn('/bin/sh', ['-c', args.join(' ') + ' | cat ; exit ${PIPESTATUS[0]}']);
   } else {
     // this nasty business prevents piping problems on linux
     // The return code should be that of wkhtmltopdf and not of cat
@@ -108,7 +110,7 @@ function wkhtmltopdf(input, options, callback) {
       callback(null, stream); // stream is child.stdout
     }
   });
-    
+
   // setup error handling
   var stderrMessages = [];
   var stream = child.stdout;
