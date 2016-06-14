@@ -98,7 +98,7 @@ function wkhtmltopdf(input, options, callback) {
     // this nasty business prevents piping problems on linux
     // The return code should be that of wkhtmltopdf and not of cat
     // http://stackoverflow.com/a/18295541/1705056
-    var child = spawn('/bin/bash', ['-c', args.join(' ') + ' | cat ; exit ${PIPESTATUS[0]}']);
+    var child = spawn(wkhtmltopdf.shell, ['-c', args.join(' ') + ' | cat ; exit ${PIPESTATUS[0]}']);
   }
 
   // call the callback with null error when the process exits successfully
@@ -183,4 +183,5 @@ function wkhtmltopdf(input, options, callback) {
 }
 
 wkhtmltopdf.command = 'wkhtmltopdf';
+wkhtmltopdf.shell = '/bin/bash';
 module.exports = wkhtmltopdf;
