@@ -16,6 +16,8 @@ describe('wkhtmltopdf', function() {
   beforeAll(function() {
     Rimraf.sync(resultsDir);
     Mkdirp.sync(resultsDir);
+    console.log('[Info] Test cases only check that the output .pdf contains some data, manual inspection is needed');
+    console.log('[Info] Please inspect the expected and results directory after the tests');
   });
 
   function fixturePath(name) { return Path.join(fixturesDir, name); }
@@ -23,7 +25,7 @@ describe('wkhtmltopdf', function() {
   function expectedPath(name) { return Path.join(expectedDir, name); }
 
   function checkResults(resultsName, expectedName) {
-    console.log('Check that ' + resultPath(resultsName) + ' is like ' + expectedPath(expectedName));
+    expect(Fs.statSync(resultPath(resultsName)).size).toBeGreaterThan(0);
   }
 
   // Return a file URL we can use to access a fixture
@@ -33,11 +35,12 @@ describe('wkhtmltopdf', function() {
 
   describe('when input starts with file://', function() {
     it('should treat input as file path', function(done) {
-      Wkhtmltopdf(fixtureFileUri('validFile.html'), function(err) {
-        expect(err).toBeNull();
+      var output = Fs.createWriteStream(resultPath('fileUrlSpec.pdf'));
+      Wkhtmltopdf(fixtureFileUri('validFile.html')).pipe(output);
+      output.on('finish', function() {
         checkResults('fileUrlSpec.pdf', 'validFile.pdf');
         done();
-      }).pipe(Fs.createWriteStream(resultPath('fileUrlSpec.pdf')));
+      });
     });
   });
 
@@ -58,11 +61,12 @@ describe('wkhtmltopdf', function() {
     });
 
     it('should treat input as url', function(done) {
-      Wkhtmltopdf(fixtureHttpUrl('validFile.html'), function(err) {
-        expect(err).toBeNull();
+      var output = Fs.createWriteStream(resultPath('httpUrlSpec.pdf'));
+      Wkhtmltopdf(fixtureHttpUrl('validFile.html')).pipe(output);
+      output.on('finish', function() {
         checkResults('httpUrlSpec.pdf', 'validFile.pdf');
         done();
-      }).pipe(Fs.createWriteStream(resultPath('httpUrlSpec.pdf')));
+      });
     });
 
     afterAll(function() {
@@ -72,11 +76,12 @@ describe('wkhtmltopdf', function() {
 
   describe('when input is an html', function() {
     it('should use it as the source', function(done) {
-      Wkhtmltopdf(Fs.readFileSync(fixturePath('validFile.html'), 'utf8'), function(err) {
-        expect(err).toBeNull();
+      var output = Fs.createWriteStream(resultPath('htmlSourceSpec.pdf'));
+      Wkhtmltopdf(Fs.readFileSync(fixturePath('validFile.html'), 'utf8')).pipe(output);
+      output.on('finish', function() {
         checkResults('htmlSourceSpec.pdf', 'validFile.pdf');
         done();
-      }).pipe(Fs.createWriteStream(resultPath('htmlSourceSpec.pdf')));
+      });
     });
   });
 
@@ -87,6 +92,21 @@ describe('wkhtmltopdf', function() {
         checkResults('streamSourceSpec.pdf', 'validFile.pdf');
         done();
       }).pipe(Fs.createWriteStream(resultPath('streamSourceSpec.pdf')));
+    });
+  });
+
+  describe('when callback is used', function() {
+    it('should return a readable stream', function(done) {
+      Wkhtmltopdf(Fs.createReadStream(fixturePath('validFile.html')), function(err, stream) {
+        expect(err).toBeNull();
+        expect(stream).toBeTruthy();
+        var output = Fs.createWriteStream(resultPath('callbackStream.pdf'))
+        stream.pipe(output);
+        output.on('finish', function() {
+          checkResults('callbackStream.pdf', 'validFile.pdf');
+          done();
+        });
+      });
     });
   });
 
