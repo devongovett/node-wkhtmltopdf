@@ -27,5 +27,8 @@
     "jasmine": "^2.3.2",
     "mkdirp": "^0.5.1",
     "rimraf": "^2.4.3"
-  }
+  },
+  "files": [
+    "index.js"
+  ]
 }
