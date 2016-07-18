@@ -101,6 +101,8 @@ function wkhtmltopdf(input, options, callback) {
     var child = spawn(wkhtmltopdf.shell, ['-c', args.join(' ') + ' | cat ; exit ${PIPESTATUS[0]}']);
   }
 
+  var stream = child.stdout;
+
   // call the callback with null error when the process exits successfully
   child.on('exit', function(code) {
     if (code !== 0) {
@@ -113,7 +115,6 @@ function wkhtmltopdf(input, options, callback) {
 
   // setup error handling
   var stderrMessages = [];
-  var stream = child.stdout;
   function handleError(err) {
     var errObj = null;
     if (Array.isArray(err)) {
@@ -151,7 +152,7 @@ function wkhtmltopdf(input, options, callback) {
       stream.emit('error', errObj);
     }
   }
-  
+
   child.once('error', function(err) {
     throw new Error(err); // critical error
   });
@@ -162,12 +163,16 @@ function wkhtmltopdf(input, options, callback) {
       console.log('[node-wkhtmltopdf] [debug] ' + data.toString());
     }
   });
-  
-  child.stdout.on('data', function(data) {
-    if (options.debugStdOut) {
+
+  if (options.debugStdOut && !options.output) {
+    throw new Error('debugStdOut may not be used when wkhtmltopdf\'s output is stdout');
+  }
+
+  if (options.debugStdOut && options.output) {
+    child.stdout.on('data', function(data) {
       console.log('[node-wkhtmltopdf] [debugStdOut] ' + data.toString());
-    }
-  });
+    });
+  }
 
   // write input to stdin if it isn't a url
   if (!isUrl) {
