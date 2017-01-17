@@ -48,7 +48,11 @@ function wkhtmltopdf(input, options, callback) {
     Array.prototype.splice.apply(keys, spliceArgs);
   }
 
-  var args = [wkhtmltopdf.command, '--quiet'];
+  var args = [wkhtmltopdf.command];
+  if (!options.debug) {
+    args.push('--quiet');
+  }
+
   keys.forEach(function(key) {
     var val = options[key];
     if (key === 'ignore' || key === 'debug' || key === 'debugStdOut') { // skip adding the ignore/debug keys
@@ -88,6 +92,9 @@ function wkhtmltopdf(input, options, callback) {
   // show the command that is being run if debug opion is passed
   if (options.debug) {
     console.log('[node-wkhtmltopdf] [debug] [command] ' + args.join(' '));
+    if (options.debug instanceof Function) {
+      options.debug(data);
+    }
   }
 
   if (process.platform === 'win32') {
