@@ -171,11 +171,11 @@ function wkhtmltopdf(input, options, callback) {
     }
   });
 
-  if (options.debugStdOut && !options.output) {
+  if (options.debugStdOut && !output) {
     throw new Error('debugStdOut may not be used when wkhtmltopdf\'s output is stdout');
   }
 
-  if (options.debugStdOut && options.output) {
+  if (options.debugStdOut && output) {
     child.stdout.on('data', function(data) {
       console.log('[node-wkhtmltopdf] [debugStdOut] ' + data.toString());
     });
