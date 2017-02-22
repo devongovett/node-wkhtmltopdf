@@ -90,11 +90,8 @@ function wkhtmltopdf(input, options, callback) {
   args.push(output ? quote(output) : '-');  // stdout if no output file
 
   // show the command that is being run if debug opion is passed
-  if (options.debug) {
+  if (options.debug && !(options instanceof Function)) {
     console.log('[node-wkhtmltopdf] [debug] [command] ' + args.join(' '));
-    if (options.debug instanceof Function) {
-      options.debug(data);
-    }
   }
 
   if (process.platform === 'win32') {
@@ -166,7 +163,9 @@ function wkhtmltopdf(input, options, callback) {
 
   child.stderr.on('data', function(data) {
     stderrMessages.push((data || '').toString());
-    if (options.debug) {
+    if (options.debug instanceof Function) {
+      options.debug(data);
+    } else if (options.debug) {
       console.log('[node-wkhtmltopdf] [debug] ' + data.toString());
     }
   });
@@ -177,7 +176,11 @@ function wkhtmltopdf(input, options, callback) {
 
   if (options.debugStdOut && output) {
     child.stdout.on('data', function(data) {
-      console.log('[node-wkhtmltopdf] [debugStdOut] ' + data.toString());
+      if (options.debug instanceof Function) {
+        options.debug(data);
+      } else if (options.debug) {
+        console.log('[node-wkhtmltopdf] [debugStdOut] ' + data.toString());
+      }
     });
   }
 
