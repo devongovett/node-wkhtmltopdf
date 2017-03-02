@@ -1,12 +1,13 @@
 var spawn = require('child_process').spawn;
 var slang = require('slang');
-var _ = require('underscore');
+var isStream = require('is-stream');
 
 function quote(val) {
   // escape and quote the value if it is a string and this isn't windows
-  if (typeof val === 'string' && process.platform !== 'win32')
+  if (typeof val === 'string' && process.platform !== 'win32') {
     val = '"' + val.replace(/(["\\$`])/g, '\\$1') + '"';
-    
+  }
+
   return val;
 }
 
@@ -17,131 +18,176 @@ function wkhtmltopdf(input, options, callback) {
     callback = options;
     options = {};
   }
-  
+
   var output = options.output;
   delete options.output;
-    
+
   // make sure the special keys are last
-  var args = [wkhtmltopdf.command, '--quiet'];
-
-  if (options.rawArgs && options.rawArgs.length) {
-    options.rawArgs.forEach(function(arg) {
-      args.push(quote(arg));
-    });
-  }
-  else {
-    var extraKeys = [];
-    var keys = Object.keys(options).filter(function(key) {
-      if (key === 'toc' || key === 'cover' || key === 'page') {
-        extraKeys.push(key);
-        return false;
-      }
-      
-      return true;
-    }).concat(extraKeys);
-
-    // make sure toc specific args appear after toc arg
-    if(_.find(keys, function(key){return key === 'toc'})) {
-      var tocArgs = ['disableDottedLines', 'tocHeaderText', 'tocLevelIndentation', 'disableTocLinks', 'tocTextSizeShrink', 'xslStyleSheet'];
-      var myTocArgs = [];
-      keys = keys.filter(function(key){
-        if(_.find(tocArgs, function(tkey){ return tkey === key })) {
-          myTocArgs.push(key);
-          return false;
-        }
-        return true;
-      });
-      var spliceArgs = [keys.indexOf('toc')+1, 0].concat(myTocArgs);
-      Array.prototype.splice.apply(keys, spliceArgs);
+  var extraKeys = [];
+  var keys = Object.keys(options).filter(function(key) {
+    if (key === 'toc' || key === 'cover' || key === 'page') {
+      extraKeys.push(key);
+      return false;
     }
-    
-    keys.forEach(function(key) {
-      var val = options[key];
-      if (key === 'ignore') { // skip adding the ignore key
+
+    return true;
+  }).concat(extraKeys);
+
+  // make sure toc specific args appear after toc arg
+  if (keys.indexOf('toc') >= 0) {
+    var tocArgs = ['disableDottedLines', 'tocHeaderText', 'tocLevelIndentation', 'disableTocLinks', 'tocTextSizeShrink', 'xslStyleSheet'];
+    var myTocArgs = [];
+    keys = keys.filter(function(key){
+      if (tocArgs.find(function(tkey){ return tkey === key })) {
+        myTocArgs.push(key);
         return false;
       }
-          
-      if (key !== 'toc' && key !== 'cover' && key !== 'page') {
-        key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
-      }
-      
+      return true;
+    });
+    var spliceArgs = [keys.indexOf('toc')+1, 0].concat(myTocArgs);
+    Array.prototype.splice.apply(keys, spliceArgs);
+  }
+
+  var args = [wkhtmltopdf.command, '--quiet'];
+  keys.forEach(function(key) {
+    var val = options[key];
+    if (key === 'ignore' || key === 'debug' || key === 'debugStdOut') { // skip adding the ignore/debug keys
+      return false;
+    }
+
+    if (key !== 'toc' && key !== 'cover' && key !== 'page') {
+      key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
+    }
+
+    if (Array.isArray(val)) { // add repeatable args
+      val.forEach(function(valueStr) {
+        args.push(key);
+        if (Array.isArray(valueStr)) { // if repeatable args has key/value pair
+          valueStr.forEach(function(keyOrValueStr) {
+            args.push(quote(keyOrValueStr));
+          });
+        } else {
+          args.push(quote(valueStr));
+        }
+      });
+    } else { // add normal args
       if (val !== false) {
         args.push(key);
       }
-        
-      if (Array.isArray(val)) {
-        val.forEach(function(valPart) {
-          args.push(quote(valPart));
-        });
-      } else if (typeof val !== 'boolean') {
+
+      if (typeof val !== 'boolean') {
         args.push(quote(val));
       }
-    });
-    var isUrl = /^(https?|file):\/\//.test(input);
-    args.push(isUrl ? quote(input) : '-');    // stdin if HTML given directly
-    args.push(output ? quote(output) : '-');  // stdout if no output file  
-  } 
+    }
+  });
+
+  var isUrl = /^(https?|file):\/\//.test(input);
+  args.push(isUrl ? quote(input) : '-');    // stdin if HTML given directly
+  args.push(output ? quote(output) : '-');  // stdout if no output file
+
+  // show the command that is being run if debug opion is passed
+  if (options.debug) {
+    console.log('[node-wkhtmltopdf] [debug] [command] ' + args.join(' '));
+  }
+
   if (process.platform === 'win32') {
     var child = spawn(args[0], args.slice(1));
+  } else if (process.platform === 'darwin') {
+    var child = spawn('/bin/sh', ['-c', args.join(' ') + ' | cat ; exit ${PIPESTATUS[0]}']);
   } else {
     // this nasty business prevents piping problems on linux
-    var child = spawn('/bin/sh', ['-c', args.join(' ') + ' | cat']);
+    // The return code should be that of wkhtmltopdf and not of cat
+    // http://stackoverflow.com/a/18295541/1705056
+    var child = spawn(wkhtmltopdf.shell, ['-c', args.join(' ') + ' | cat ; exit ${PIPESTATUS[0]}']);
   }
-  
-  // call the callback with null error when the process exits successfully
-  if (callback) {
-    child.on('exit', function() { callback(null); });
-  }
-    
-  // setup error handling
+
   var stream = child.stdout;
+
+  // call the callback with null error when the process exits successfully
+  child.on('exit', function(code) {
+    if (code !== 0) {
+      stderrMessages.push('wkhtmltopdf exited with code ' + code);
+      handleError(stderrMessages);
+    } else if (callback) {
+      callback(null, stream); // stream is child.stdout
+    }
+  });
+
+  // setup error handling
+  var stderrMessages = [];
   function handleError(err) {
-    // check ignore warnings array before killing child
-    if (options.ignore && options.ignore instanceof Array) {
-      var ignoreError = false;
-      options.ignore.forEach(function(opt) {
-        if (typeof opt === 'string' && opt === err.message) {
-          ignoreError = true;
+    var errObj = null;
+    if (Array.isArray(err)) {
+      // check ignore warnings array before killing child
+      if (options.ignore && options.ignore instanceof Array) {
+        var ignoreError = false;
+        options.ignore.forEach(function(opt) {
+          err.forEach(function(error) {
+            if (typeof opt === 'string' && opt === error) {
+              ignoreError = true;
+            }
+            if (opt instanceof RegExp && error.match(opt)) {
+              ignoreError = true;
+            }
+          });
+        });
+        if (ignoreError) {
+          return true;
         }
-        if (opt instanceof RegExp && err.message.match(opt)) {
-          ignoreError = true;
-        }
-      });
-      if (ignoreError) {
-        return true;
       }
+      errObj = new Error(err.join('\n'));
+    } else if (err) {
+      errObj =  new Error(err);
     }
     child.removeAllListeners('exit');
     child.kill();
-    
     // call the callback if there is one
+
     if (callback) {
-      callback(err);
+      callback(errObj);
     }
-      
+
     // if not, or there are listeners for errors, emit the error event
     if (!callback || stream.listeners('error').length > 0) {
-      stream.emit('error', err);
+      stream.emit('error', errObj);
     }
   }
-  
-  child.once('error', handleError);
-  child.stderr.once('data', function(err) {
-    handleError(new Error((err || '').toString().trim()));
+
+  child.once('error', function(err) {
+    throw new Error(err); // critical error
   });
-  
+
+  child.stderr.on('data', function(data) {
+    stderrMessages.push((data || '').toString());
+    if (options.debug) {
+      console.log('[node-wkhtmltopdf] [debug] ' + data.toString());
+    }
+  });
+
+  if (options.debugStdOut && !options.output) {
+    throw new Error('debugStdOut may not be used when wkhtmltopdf\'s output is stdout');
+  }
+
+  if (options.debugStdOut && options.output) {
+    child.stdout.on('data', function(data) {
+      console.log('[node-wkhtmltopdf] [debugStdOut] ' + data.toString());
+    });
+  }
+
   // write input to stdin if it isn't a url
   if (!isUrl) {
-    child.stdin.end(input);
+    if (isStream(input)) {
+      input.pipe(child.stdin);
+    } else {
+      child.stdin.end(input);
+    }
   }
-  
+
   // return stdout stream so we can pipe
-  if (callback) {
-    return callback(null, stream);
-  } else {
-    return stream;
-  }
+  return stream;
 }
 
 wkhtmltopdf.command = 'wkhtmltopdf';
+wkhtmltopdf.shell = '/bin/bash';
 module.exports = wkhtmltopdf;
+module.exports.render = wkhtmltopdf;
