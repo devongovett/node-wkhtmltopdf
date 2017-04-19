@@ -107,7 +107,11 @@ function wkhtmltopdf(input, options, callback) {
   child.on('exit', function(code) {
     if (code !== 0) {
       stderrMessages.push('wkhtmltopdf exited with code ' + code);
-      handleError(stderrMessages);
+      if(handleError(stderrMessages)){
+        if (callback) {
+          callback(null, stream); // stream is child.stdout
+        }
+      }
     } else if (callback) {
       callback(null, stream); // stream is child.stdout
     }
@@ -123,6 +127,7 @@ function wkhtmltopdf(input, options, callback) {
         var ignoreError = false;
         options.ignore.forEach(function(opt) {
           err.forEach(function(error) {
+            error = error.trim();
             if (typeof opt === 'string' && opt === error) {
               ignoreError = true;
             }
