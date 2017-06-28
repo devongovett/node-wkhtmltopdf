@@ -22,6 +22,7 @@ function wkhtmltopdf(input, options, callback) {
   var output = options.output;
   var spawnOptions = options.spawnOptions;
   delete options.output;
+  delete options.spawnOptions;
 
   // make sure the special keys are last
   var extraKeys = [];
