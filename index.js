@@ -186,6 +186,8 @@ function wkhtmltopdf(input, options, callback) {
 
   // write input to stdin if it isn't a url
   if (!isUrl) {
+      // Handle errors on the input stream (happens when command cannot run)
+      child.stdin.on('error', handleError);
     if (isStream(input)) {
       input.pipe(child.stdin);
     } else {
