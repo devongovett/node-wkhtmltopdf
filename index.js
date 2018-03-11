@@ -3,15 +3,11 @@ var slang = require('slang');
 var isStream = require('is-stream');
 
 function quote(val) {
-  // escape and quote the value if it is a string
-  if (typeof val === 'string') {
-    if (process.platform === 'win32') {
-      val = '"' + val.replace(/(")/g, '"$1') + '"';
-    } else {
-      val = '"' + val.replace(/(["\\$`])/g, '\\$1') + '"';
-    }
+  // escape and quote the value if it is a string and this isn't windows
+  if (typeof val === 'string' && process.platform !== 'win32') {
+    val = '"' + val.replace(/(["\\$`])/g, '\\$1') + '"';
   }
-  
+
   return val;
 }
 
