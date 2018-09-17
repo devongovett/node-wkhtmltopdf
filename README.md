@@ -66,8 +66,20 @@ wkhtmltopdf('http://apple.com/', {
 });
 ```
 
-`wkhtmltopdf` is just a function, which you call with either a URL or an inline HTML string, and it returns
+`wkhtmltopdf` is just a function, which you call with a URL, an inline HTML string or an Array of objects (see [Multi-Source-Input](#multi-source-input)), and it returns
 a stream that you can read from or pipe to wherever you like (e.g. a file, or an HTTP response).
+
+### Multi-Source-input
+
+`wkhtmltopdf` supports the ability to construct a PDF from several source documents, and can even generate a table-of-contents based on an outline inferred from the source HTML structure. To combine several documents into a single PDF, pass an Array of objects as the first argument. Each element of the array represents a single source for the resulting PDF, and must be an object conforming to the following structure:
+
+```
+  {
+    source: STRING,     // URL to source. Omit for type 'toc'.
+    type: STRING,       // 'page', 'toc' or 'cover'. Default: 'page'
+    options: {...}      // Page-specific options using same format as global options. Default: {}
+  }
+```
 
 ## Options
 
