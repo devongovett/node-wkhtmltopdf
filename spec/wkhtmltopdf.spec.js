@@ -111,4 +111,20 @@ describe('wkhtmltopdf', function() {
     });
   });
 
+  describe('when input is an array', function() {
+    it('use the list of urls as inputs and concatenate the results into a single pdf', function(done) {
+      var output = Fs.createWriteStream(resultPath('arraySourceSpec.pdf'));
+      Wkhtmltopdf([
+        {source: fixtureFileUri('validFile.html'), options: {defaultHeader: true}},
+        {source: fixtureFileUri('validFile.html'), type: 'page'},
+        {source: fixtureFileUri('validFile.html'), type: 'cover'},
+        {type: 'toc', options: {defaultHeader: true}}
+      ], {orientation: 'Landscape'}).pipe(output);
+      output.on('finish', function() {
+        checkResults('arraySourceSpec.pdf', 'validFile.pdf');
+        done();
+      })
+    });
+  });
+
 });

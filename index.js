@@ -2,6 +2,11 @@ var spawn = require('child_process').spawn;
 var slang = require('slang');
 var isStream = require('is-stream');
 
+var globalArgs = ['collate', 'noCollate', 'cookieJar', 'copies', 'dpi', 'extendedHelp', 'grayscale', 'help', 'htmldoc', 'imageDpi', 'imageQuality', 'license', 'logLevel', 'lowquality',
+  'manpage', 'marginBottom', 'marginLeft', 'marginRight', 'marginTop', 'orientation', 'pageHeight', 'pageSize', 'pageWidth', 'noPdfCompression', 'quiet', 'readArgsFromStdin', 'readme',
+  'title', 'useXserver', 'version'];
+var tocArgs = ['disableDottedLines', 'tocHeaderText', 'tocLevelIndentation', 'disableTocLinks', 'tocTextSizeShrink', 'xslStyleSheet'];
+
 function quote(val) {
   // escape and quote the value if it is a string and this isn't windows
   if (typeof val === 'string' && process.platform !== 'win32') {
@@ -9,6 +14,37 @@ function quote(val) {
   }
 
   return val;
+}
+
+function generateArgument(key, val) {
+  var args = [];
+
+  if (key !== 'toc' && key !== 'cover' && key !== 'page') {
+    key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
+  }
+
+  if (Array.isArray(val)) { // add repeatable args
+    val.forEach(function(valueStr) {
+      args.push(key);
+      if (Array.isArray(valueStr)) { // if repeatable args has key/value pair
+        valueStr.forEach(function(keyOrValueStr) {
+          args.push(quote(keyOrValueStr));
+        });
+      } else {
+        args.push(quote(valueStr));
+      }
+    });
+  } else { // add normal args
+    if (val !== false) {
+      args.push(key);
+    }
+
+    if (typeof val !== 'boolean') {
+      args.push(quote(val));
+    }
+  }
+
+  return args;
 }
 
 function wkhtmltopdf(input, options, callback) {
@@ -22,73 +58,71 @@ function wkhtmltopdf(input, options, callback) {
   var output = options.output;
   delete options.output;
 
-  // make sure the special keys are last
-  var extraKeys = [];
-  var keys = Object.keys(options).filter(function(key) {
-    if (key === 'toc' || key === 'cover' || key === 'page') {
-      extraKeys.push(key);
-      return false;
-    }
-
-    return true;
-  }).concat(extraKeys);
-
-  // make sure toc specific args appear after toc arg
-  if (keys.indexOf('toc') >= 0) {
-    var tocArgs = ['disableDottedLines', 'tocHeaderText', 'tocLevelIndentation', 'disableTocLinks', 'tocTextSizeShrink', 'xslStyleSheet'];
-    var myTocArgs = [];
-    keys = keys.filter(function(key){
-      if (tocArgs.find(function(tkey){ return tkey === key })) {
-        myTocArgs.push(key);
-        return false;
-      }
-      return true;
-    });
-    var spliceArgs = [keys.indexOf('toc')+1, 0].concat(myTocArgs);
-    Array.prototype.splice.apply(keys, spliceArgs);
-  }
-
   var args = [wkhtmltopdf.command];
   if (!options.debug) {
     args.push('--quiet');
   }
+  var isArray = Array.isArray(input);
+  // handle multi-page input
+  if (isArray) {
+    // add global options
+    Object.keys(options).forEach(function(key) {
+      if (globalArgs.indexOf(key) >= 0) {
+        args = args.concat(generateArgument(key, options[key]));
+      }
+    });
 
-  keys.forEach(function(key) {
-    var val = options[key];
-    if (key === 'ignore' || key === 'debug' || key === 'debugStdOut') { // skip adding the ignore/debug keys
-      return false;
-    }
-
-    if (key !== 'toc' && key !== 'cover' && key !== 'page') {
-      key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
-    }
-
-    if (Array.isArray(val)) { // add repeatable args
-      val.forEach(function(valueStr) {
-        args.push(key);
-        if (Array.isArray(valueStr)) { // if repeatable args has key/value pair
-          valueStr.forEach(function(keyOrValueStr) {
-            args.push(quote(keyOrValueStr));
-          });
-        } else {
-          args.push(quote(valueStr));
+    // add pages/covers/toc and options
+    input.forEach(function(page) {
+      // add input for page
+      args = args.concat(generateArgument(page.type || 'page', quote(page.source) || true));
+      // add per-page options
+      var opts = page.options || {};
+      Object.keys(opts).forEach(function(key) {
+        if (globalArgs.indexOf(key) < 0) {
+          args = args.concat(generateArgument(key, opts[key]));
         }
       });
-    } else { // add normal args
-      if (val !== false) {
-        args.push(key);
+    });
+  } else {
+    // make sure the special keys are last
+    var extraKeys = [];
+    var keys = Object.keys(options).filter(function(key) {
+      if (key === 'toc' || key === 'cover' || key === 'page') {
+        extraKeys.push(key);
+        return false;
       }
 
-      if (typeof val !== 'boolean') {
-        args.push(quote(val));
-      }
+      return true;
+    }).concat(extraKeys);
+
+    // make sure toc specific args appear after toc arg
+    if (keys.indexOf('toc') >= 0) {
+      var myTocArgs = [];
+      keys = keys.filter(function(key){
+        if (tocArgs.find(function(tkey){ return tkey === key })) {
+          myTocArgs.push(key);
+          return false;
+        }
+        return true;
+      });
+      var spliceArgs = [keys.indexOf('toc')+1, 0].concat(myTocArgs);
+      Array.prototype.splice.apply(keys, spliceArgs);
     }
-  });
 
-  var isUrl = /^(https?|file):\/\//.test(input);
-  args.push(isUrl ? quote(input) : '-');    // stdin if HTML given directly
+    keys.forEach(function(key) {
+      if (key === 'ignore' || key === 'debug' || key === 'debugStdOut') { // skip adding the ignore/debug keys
+        return false;
+      }
+
+      args = args.concat(generateArgument(key, options[key]));
+    });
+
+    var isUrl = /^(https?|file):\/\//.test(input);
+    args.push(isUrl ? quote(input) : '-');    // stdin if HTML given directly
+  }
+
   args.push(output ? quote(output) : '-');  // stdout if no output file
-
   // show the command that is being run if debug opion is passed
   if (options.debug && !(options instanceof Function)) {
     console.log('[node-wkhtmltopdf] [debug] [command] ' + args.join(' '));
@@ -185,7 +219,7 @@ function wkhtmltopdf(input, options, callback) {
   }
 
   // write input to stdin if it isn't a url
-  if (!isUrl) {
+  if (!isUrl && !isArray) {
       // Handle errors on the input stream (happens when command cannot run)
       child.stdin.on('error', handleError);
     if (isStream(input)) {
