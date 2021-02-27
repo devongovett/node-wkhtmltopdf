@@ -88,7 +88,11 @@ function wkhtmltopdf(input, options, callback) {
   });
 
   var isUrl = /^(https?|file):\/\//.test(input);
-  args.push(isUrl ? quote(input) : '-');    // stdin if HTML given directly
+
+  if (input) {
+    args.push(isUrl ? quote(input) : '-');    // stdin if HTML given directly
+  }
+
   args.push(output ? quote(output) : '-');  // stdout if no output file
 
   // show the command that is being run if debug opion is passed
@@ -99,12 +103,12 @@ function wkhtmltopdf(input, options, callback) {
   if (process.platform === 'win32') {
     var child = spawn(args[0], args.slice(1), spawnOptions);
   } else if (process.platform === 'darwin') {
-    var child = spawn('/bin/sh', ['-c', args.join(' ') + ' | cat ; exit ${PIPESTATUS[0]}'], spawnOptions);
+    var child = spawn('/bin/sh', ['-c', 'set -o pipefail ; ' + args.join(' ') + ' | cat'], spawnOptions);
   } else {
     // this nasty business prevents piping problems on linux
     // The return code should be that of wkhtmltopdf and not of cat
     // http://stackoverflow.com/a/18295541/1705056
-    var child = spawn(wkhtmltopdf.shell, ['-c', args.join(' ') + ' | cat ; exit ${PIPESTATUS[0]}'], spawnOptions);
+    var child = spawn(wkhtmltopdf.shell, ['-c', 'set -o pipefail ; ' + args.join(' ') + ' | cat'], spawnOptions);
   }
 
   var stream = child.stdout;
@@ -188,6 +192,8 @@ function wkhtmltopdf(input, options, callback) {
 
   // write input to stdin if it isn't a url
   if (!isUrl) {
+      // Handle errors on the input stream (happens when command cannot run)
+      child.stdin.on('error', handleError);
     if (isStream(input)) {
       input.pipe(child.stdin);
     } else {
