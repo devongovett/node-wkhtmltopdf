@@ -59,11 +59,24 @@ wkhtmltopdf('http://apple.com/', {
   output: 'out.pdf',
   ignore: ['QFont::setPixelSize: Pixel size <= 0 (0)']
 });
+
 // RegExp also acceptable
 wkhtmltopdf('http://apple.com/', { 
   output: 'out.pdf',
   ignore: [/QFont::setPixelSize/]
 });
+
+// Using as express middlware
+function exampleMiddleware (req, res, next) {
+  wkhtmltopdf(('<h1>Test</h1><p>Hello express</p>', { timeout: 30 }, function (err, stream) {
+    if (err) {
+      return next(err);
+    }
+    res.attachment(`out.pdf`);
+    stream.pipe(res);
+  })
+}
+
 ```
 
 `wkhtmltopdf` is just a function, which you call with either a URL or an inline HTML string, and it returns
@@ -72,11 +85,13 @@ a stream that you can read from or pipe to wherever you like (e.g. a file, or an
 ## Options
 
 There are [many options](http://wkhtmltopdf.org/docs.html) available to
-wkhtmltopdf.  All of the command line options are supported as documented on the page linked to above.  The
+wkhtmltopdf. All of the command line options are supported as documented on the page linked to above. The
 options are camelCased instead-of-dashed as in the command line tool. Note that options that do not have values, must be specified as a boolean, e.g. **debugJavascript: true**
 
 There is also an `output` option that can be used to write the output directly to a filename, instead of returning
 a stream.
+
+To interrupt a long running wkhtmltopdf process use `timeout` option with a value of seconds to wait for regular termination. Any falsy value means "wait as long as possible", that's default.
 
 ### Debug Options
 

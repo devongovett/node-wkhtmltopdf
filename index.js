@@ -57,7 +57,7 @@ function wkhtmltopdf(input, options, callback) {
 
   keys.forEach(function(key) {
     var val = options[key];
-    if (key === 'ignore' || key === 'debug' || key === 'debugStdOut') { // skip adding the ignore/debug keys
+    if (key === 'ignore' || key === 'debug' || key === 'debugStdOut' || key === 'timeout') { // skip adding the ignore/debug keys
       return false;
     }
 
@@ -111,14 +111,24 @@ function wkhtmltopdf(input, options, callback) {
     var child = spawn(wkhtmltopdf.shell, ['-c', 'set -o pipefail ; ' + args.join(' ') + ' | cat'], spawnOptions);
   }
 
+  var timeout
+  if (options.timeout) {
+    timeout = setTimeout( function () {
+      var timeoutError = new Error('Child process terminated due to timeout');
+      timeoutError.code = '_EXIT_TIMEOUT';
+      handleError(timeoutError);
+    }, options.timeout*1000);
+  }
+
   var stream = child.stdout;
 
   // call the callback with null error when the process exits successfully
   child.on('exit', function(code) {
     if (code !== 0) {
-      stderrMessages.push('wkhtmltopdf exited with code ' + code);
+      stderrMessages.code = code;
       handleError(stderrMessages);
     } else if (callback) {
+      clearTimeout(timeout);
       callback(null, stream); // stream is child.stdout
     }
   });
@@ -127,12 +137,19 @@ function wkhtmltopdf(input, options, callback) {
   var stderrMessages = [];
   function handleError(err) {
     var errObj = null;
+    var code;
+    var parallelError;
     if (Array.isArray(err)) {
+      code = err.code;
+      parallelError = err.parallelError;
+      // fix cutted lines in Windows
+      err = Buffer.concat(err).toString();
+      var lines = err.split(/[\r\n]+/).map( line => line.trim() ).filter( line => !!line )
       // check ignore warnings array before killing child
       if (options.ignore && options.ignore instanceof Array) {
         var ignoreError = false;
         options.ignore.forEach(function(opt) {
-          err.forEach(function(error) {
+          lines.forEach(function(error) {
             if (typeof opt === 'string' && opt === error) {
               ignoreError = true;
             }
@@ -145,10 +162,19 @@ function wkhtmltopdf(input, options, callback) {
           return true;
         }
       }
-      errObj = new Error(err.join('\n'));
+      errObj = new Error(lines[0] || ('Child process finished with exit code ' + code));
+      errObj.code = '_EXIT_FAILURE';
+      errObj.errno = code;
+      errObj.details = err;
+      errObj.parallelError = parallelError;
+    } else if (err instanceof Error) {
+      errObj = err;
     } else if (err) {
-      errObj =  new Error(err);
+      errObj = new Error(err);
     }
+    errObj.args = args;
+
+    clearTimeout(timeout);
     child.removeAllListeners('exit');
     child.kill();
     // call the callback if there is one
@@ -164,11 +190,11 @@ function wkhtmltopdf(input, options, callback) {
   }
 
   child.once('error', function(err) {
-    throw new Error(err); // critical error
+    handleError(err); // critical error
   });
 
   child.stderr.on('data', function(data) {
-    stderrMessages.push((data || '').toString());
+    stderrMessages.push(data);
     if (options.debug instanceof Function) {
       options.debug(data);
     } else if (options.debug) {
@@ -192,10 +218,11 @@ function wkhtmltopdf(input, options, callback) {
 
   // write input to stdin if it isn't a url
   if (!isUrl) {
-      // Handle errors on the input stream (happens when command cannot run)
-      child.stdin.on('error', handleError);
     if (isStream(input)) {
-      input.pipe(child.stdin);
+      input.pipe(child.stdin)
+          .on('error', function(e) {
+            stderrMessages.parallelError = e;
+          });
     } else {
       child.stdin.end(input);
     }
