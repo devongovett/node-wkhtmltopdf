@@ -100,13 +100,15 @@ function wkhtmltopdf(input, options, callback) {
     })
   } else {
     var isUrl = /^(https?|file):\/\//.test(input);
-    if (input) {
+    if (input && !options.readArgsFromStdin) {
       args.push(isUrl ? quote(input) : '-');    // stdin if HTML given directly
     }
   }
 
   // Output
-  args.push(output ? quote(output) : '-');  // stdout if no output file
+  if (!options.readArgsFromStdin) {
+    args.push(output ? quote(output) : '-');  // stdout if no output file
+  }
 
   // show the command that is being run if debug opion is passed
   if (options.debug && !(options instanceof Function)) {
