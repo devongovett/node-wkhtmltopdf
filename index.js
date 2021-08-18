@@ -2,6 +2,10 @@ var spawn = require('child_process').spawn;
 var slang = require('slang');
 var isStream = require('is-stream');
 
+var globalArgs = ['collate', 'noCollate', 'cookieJar', 'copies', 'dpi', 'extendedHelp', 'grayscale', 'help', 'htmldoc', 'imageDpi', 'imageQuality', 'license', 'logLevel', 'lowquality',
+  'manpage', 'marginBottom', 'marginLeft', 'marginRight', 'marginTop', 'orientation', 'pageHeight', 'pageSize', 'pageWidth', 'noPdfCompression', 'quiet', 'readArgsFromStdin', 'readme',
+  'title', 'useXserver', 'version'];
+
 function quote(val) {
   // escape and quote the value if it is a string and this isn't windows
   if (typeof val === 'string' && process.platform !== 'win32') {
@@ -9,6 +13,41 @@ function quote(val) {
   }
 
   return val;
+}
+
+function generateArgument(key, val) {
+  var args = [];
+
+  if (key === 'ignore' || key === 'debug' || key === 'debugStdOut') { // skip adding the ignore/debug keys
+    return false;
+  }
+
+  if (key !== 'toc' && key !== 'cover' && key !== 'page') {
+    key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
+  }
+
+  if (Array.isArray(val)) { // add repeatable args
+    val.forEach(function(valueStr) {
+      args.push(key);
+      if (Array.isArray(valueStr)) { // if repeatable args has key/value pair
+        valueStr.forEach(function(keyOrValueStr) {
+          args.push(quote(keyOrValueStr));
+        });
+      } else {
+        args.push(quote(valueStr));
+      }
+    });
+  } else { // add normal args
+    if (val !== false) {
+      args.push(key);
+    }
+
+    if (typeof val !== 'boolean') {
+      args.push(quote(val));
+    }
+  }
+
+  return args;
 }
 
 function wkhtmltopdf(input, options, callback) {
@@ -56,46 +95,29 @@ function wkhtmltopdf(input, options, callback) {
   }
 
   keys.forEach(function(key) {
-    var val = options[key];
-    if (key === 'ignore' || key === 'debug' || key === 'debugStdOut') { // skip adding the ignore/debug keys
-      return false;
-    }
-
-    if (key !== 'toc' && key !== 'cover' && key !== 'page') {
-      key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
-    }
-
-    if (Array.isArray(val)) { // add repeatable args
-      val.forEach(function(valueStr) {
-        args.push(key);
-        if (Array.isArray(valueStr)) { // if repeatable args has key/value pair
-          valueStr.forEach(function(keyOrValueStr) {
-            args.push(quote(keyOrValueStr));
-          });
-        } else {
-          args.push(quote(valueStr));
-        }
-      });
-    } else { // add normal args
-      if (val !== false) {
-        args.push(key);
-      }
-
-      if (typeof val !== 'boolean') {
-        args.push(quote(val));
-      }
-    }
+    args = args.concat(generateArgument(key, options[key]));
   });
 
   // Input
   var isArray = Array.isArray(input);
   if (isArray) {
-    input.forEach(function(element) {
-      var isUrl = /^(https?|file):\/\//.test(element);
-      if (isUrl) {
-        args.push(quote(element));
+    input.forEach(function(page) {
+      if (typeof page === 'object') {
+        args = args.concat(generateArgument(page.type || 'page', page.source || true));
+        // add per-page options
+        var opts = page.options || {};
+        Object.keys(opts).forEach(function(key) {
+          if (globalArgs.indexOf(key) < 0) {
+            args = args.concat(generateArgument(key, opts[key]));
+          }
+        });
       } else {
-        console.log('[node-wkhtmltopdf] [warn] Multi PDF only supported for URL files (http[s]:// or file://)')
+        var isUrl = /^(https?|file):\/\//.test(page);
+        if (isUrl) {
+          args.push(quote(page));
+        } else {
+          console.log('[node-wkhtmltopdf] [warn] Multi PDF only supported for URL files (http[s]:// or file://)')
+        }
       }
     })
   } else {

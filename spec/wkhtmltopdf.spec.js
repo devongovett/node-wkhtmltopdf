@@ -96,6 +96,37 @@ describe('wkhtmltopdf', function() {
     });
   });
 
+  describe('when input is an array of strings', function() {
+    it('should use the list of URL as inputs and concatenate the results into a single pdf', function(done) {
+      var output = Fs.createWriteStream(resultPath('stringArraySourceSpec.pdf'));
+      Wkhtmltopdf([
+        fixtureFileUri('validFile.html'),
+        fixtureFileUri('validFile.html'),
+        fixtureFileUri('validFile.html')
+      ]).pipe(output);
+      output.on('finish', function() {
+        checkResults('stringArraySourceSpec.pdf', 'validFile.pdf');
+        done();
+      })
+    });
+  });
+
+  describe('when input is an array of objects', function() {
+    it('should use the list of object source as inputs and concatenate the results into a single pdf', function(done) {
+      var output = Fs.createWriteStream(resultPath('objectArraySourceSpec.pdf'));
+      Wkhtmltopdf([
+        {source: fixtureFileUri('validFile.html'), options: {defaultHeader: true}},
+        {source: fixtureFileUri('validFile.html'), type: 'page'},
+        {source: fixtureFileUri('validFile.html'), type: 'cover'},
+        {type: 'toc', options: {defaultHeader: true}}
+      ], {orientation: 'Landscape'}).pipe(output);
+      output.on('finish', function() {
+        checkResults('objectArraySourceSpec.pdf', 'validFile.pdf');
+        done();
+      })
+    });
+  });
+
   describe('when callback is used', function() {
     it('should return a readable stream', function(done) {
       Wkhtmltopdf(Fs.createReadStream(fixturePath('validFile.html')), function(err, stream) {
