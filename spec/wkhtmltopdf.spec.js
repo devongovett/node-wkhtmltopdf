@@ -96,6 +96,22 @@ describe('wkhtmltopdf', function() {
     });
   });
 
+  describe('when readArgsFromStdin is set', function() {
+    it('should treat input as arguments', function(done) {
+      var args = [
+        'page',
+        fixtureFileUri('validFile.html'),
+        '-'
+      ];
+      var output = Fs.createWriteStream(resultPath('readArgsFromStdinSpec.pdf'));
+      Wkhtmltopdf(args.join(' '), { readArgsFromStdin: true }).pipe(output);
+      output.on('finish', function() {
+        checkResults('readArgsFromStdinSpec.pdf', 'validFile.pdf');
+        done();
+      });
+    });
+  });
+
   describe('when callback is used', function() {
     it('should return a readable stream', function(done) {
       Wkhtmltopdf(Fs.createReadStream(fixturePath('validFile.html')), function(err, stream) {
