@@ -18,10 +18,6 @@ function quote(val) {
 function generateArgument(key, val) {
   var args = [];
 
-  if (key === 'ignore' || key === 'debug' || key === 'debugStdOut') { // skip adding the ignore/debug keys
-    return false;
-  }
-
   if (key !== 'toc' && key !== 'cover' && key !== 'page') {
     key = key.length === 1 ? '-' + key : '--' + slang.dasherize(key);
   }
@@ -66,6 +62,10 @@ function wkhtmltopdf(input, options, callback) {
   // make sure the special keys are last
   var extraKeys = [];
   var keys = Object.keys(options).filter(function(key) {
+    if (key === 'ignore' || key === 'debug' || key === 'debugStdOut') { // skip adding the ignore/debug keys
+      return false;
+    }
+
     if (key === 'toc' || key === 'cover' || key === 'page') {
       extraKeys.push(key);
       return false;
