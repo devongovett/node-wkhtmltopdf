@@ -224,7 +224,7 @@ function wkhtmltopdf(input, options, callback) {
   }
 
   // write input to stdin if it isn't a url
-  if (!isUrl) {
+  if (!isUrl && !isArray) {
     if (isStream(input)) {
       input.pipe(child.stdin)
         .on('error', function(e) {
