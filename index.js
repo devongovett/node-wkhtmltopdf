@@ -142,9 +142,16 @@ function wkhtmltopdf(input, options, callback) {
     if (Array.isArray(err)) {
       code = err.code;
       parallelError = err.parallelError;
-      // fix cutted lines in Windows
+      // as `err` could contain a small chunks of stdout (and it does sometimes in Windows)
+      // we have to concatenate it before using
       err = Buffer.concat(err).toString();
-      var lines = err.split(/[\r\n]+/).map( line => line.trim() ).filter( line => !!line )
+      var lines = err.split(/[\r\n]+/)
+        .map(function(line) {
+          return line.trim();
+        })
+        .filter(function(line) {
+          return !!line;
+        })
       // check ignore warnings array before killing child
       if (options.ignore && options.ignore instanceof Array) {
         var ignoreError = false;
@@ -163,7 +170,7 @@ function wkhtmltopdf(input, options, callback) {
         }
       }
       errObj = new Error(lines[0] || ('Child process finished with exit code ' + code));
-      errObj.code = '_EXIT_FAILURE';
+      errObj.code = 'WKHTMLTOPDF_EXIT_ERROR';
       errObj.errno = code;
       errObj.details = err;
       errObj.parallelError = parallelError;
@@ -220,9 +227,9 @@ function wkhtmltopdf(input, options, callback) {
   if (!isUrl) {
     if (isStream(input)) {
       input.pipe(child.stdin)
-          .on('error', function(e) {
-            stderrMessages.parallelError = e;
-          });
+        .on('error', function(e) {
+          stderrMessages.parallelError = e;
+        });
     } else {
       child.stdin.end(input);
     }
