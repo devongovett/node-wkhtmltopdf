@@ -87,12 +87,25 @@ function wkhtmltopdf(input, options, callback) {
     }
   });
 
-  var isUrl = /^(https?|file):\/\//.test(input);
-
-  if (input) {
-    args.push(isUrl ? quote(input) : '-');    // stdin if HTML given directly
+  // Input
+  var isArray = Array.isArray(input);
+  if (isArray) {
+    input.forEach(function(element) {
+      var isUrl = /^(https?|file):\/\//.test(element);
+      if (isUrl) {
+        args.push(quote(element));
+      } else {
+        console.log('[node-wkhtmltopdf] [warn] Multi PDF only supported for URL files (http[s]:// or file://)')
+      }
+    })
+  } else {
+    var isUrl = /^(https?|file):\/\//.test(input);
+    if (input) {
+      args.push(isUrl ? quote(input) : '-');    // stdin if HTML given directly
+    }
   }
 
+  // Output
   args.push(output ? quote(output) : '-');  // stdout if no output file
 
   // show the command that is being run if debug opion is passed
