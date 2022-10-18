@@ -57,7 +57,7 @@ function wkhtmltopdf(input, options, callback) {
 
   keys.forEach(function(key) {
     var val = options[key];
-    if (key === 'ignore' || key === 'debug' || key === 'debugStdOut') { // skip adding the ignore/debug keys
+    if (key === 'ignore' || key === 'debug' || key === 'debugStdOut' || key === 'timeout') { // skip adding the ignore/debug keys
       return false;
     }
 
@@ -124,6 +124,15 @@ function wkhtmltopdf(input, options, callback) {
     var child = spawn(wkhtmltopdf.shell, ['-c', 'set -o pipefail ; ' + args.join(' ') + ' | cat'], spawnOptions);
   }
 
+  var timeout
+  if (options.timeout) {
+    timeout = setTimeout(function () {
+      var timeoutError = new Error('Child process terminated due to timeout');
+      timeoutError.code = '_EXIT_TIMEOUT';
+      handleError(timeoutError);
+    }, options.timeout*1000);
+  }
+
   var stream = child.stdout;
 
   // call the callback with null error when the process exits successfully
@@ -132,6 +141,7 @@ function wkhtmltopdf(input, options, callback) {
       stderrMessages.push('wkhtmltopdf exited with code ' + code);
       handleError(stderrMessages);
     } else if (callback) {
+      clearTimeout(timeout);
       callback(null, stream); // stream is child.stdout
     }
   });
@@ -162,8 +172,14 @@ function wkhtmltopdf(input, options, callback) {
     } else if (err) {
       errObj =  new Error(err);
     }
-    child.removeAllListeners('exit');
-    child.kill();
+    clearTimeout(timeout);
+    if(spawnOptions.detached) {
+      // this is the way closing child process and his children, when is spawned detached
+      process.kill(-child.pid);
+    } else {
+      child.removeAllListeners('exit');
+      child.kill();
+    }
     // call the callback if there is one
 
     if (callback) {
