@@ -1,0 +1,69 @@
+service: AesWkHtmlToPdfServerless
+
+custom:
+  AwsAccountId:
+    Production: "954125532892"
+    Staging: "928853671279"
+  Uppercase:
+    Production: PRODUCTION
+    Staging: STAGING
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  environment: 
+    Stage: ${opt:stage, self:provider.stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - lambda:InvokeFunction
+        - "es:*"
+      Resource: '*'
+    - Effect: Allow
+      Action:
+        - "sqs:List*"
+        - "sqs:ReceiveMessage"
+        - "sqs:DeleteMessage"
+      Resource: '*'
+    - Effect: Allow
+      Action:
+        - "ssm:GetParameter"
+      Resource: " arn:aws:ssm:us-east-1:${self:custom.AwsAccountId.${opt:stage, self:provider.stage}}:AES_*"
+
+
+package:
+  artifact: deploy/deploy-package.zip
+
+functions:  
+  WkHtmlToPdfLambda:
+    handler: index.js
+    name: wkhtmltopdf
+    events:
+      - http:
+          path: prod/wkhtmltopdf
+          method: ANY
+          cors: true
+
+    vpc:
+      subnetIds : 
+        - 'Fn::ImportValue': PrivateZoneA
+        - 'Fn::ImportValue': PrivateZoneB
+        - 'Fn::ImportValue': PrivateZoneC
+        - 'Fn::ImportValue': PrivateZoneD
+      securityGroupIds: 
+        - Ref: SgAesSeRosterLambdaAccess
+    memorySize: 512
+    timeout: 60
+    reservedConcurrency: 5
+
+resources:
+  Resources:
+    AesWkHtmlToPdfLambdaAccess:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: AES WkHtmlToPdf Lambda Security Group
+        VpcId:
+          'Fn::ImportValue': VPC
+        Tags:
+          - Key: Name
+            Value: aes-wkhtmltopdf-lambda-access

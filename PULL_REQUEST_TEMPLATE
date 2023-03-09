@@ -1,0 +1,27 @@
+What
+----------------------
+> What are you changing?  Describe impact and scope.
+
+Why
+----------------------
+> Why is this being changed?  Provide some context that may help future developers understand the reasoning behind these changes. Quote and/or link to requirements, keeping in mind that JIRA/A-HA/etc links may not be available in the future.
+
+Deploy Plan
+-----------
+> Does Platform Operations need to know anything special about this deploy? Are migrations present?
+
+Rollback Plan
+-------------
+* To roll back this change, revert the merge with: `git revert -m 1 MERGE_SHA` and perform another deploy.
+
+URLs
+----
+
+
+QA Plan
+-------
+> Fill in scenarios below in checklist format.
+> Consider Regression scenarios (did we break something else related to this change) in addition to Happy Path (testing the new feature directly).
+> Evaluate the risk level and label accordingly and ensure the QA Plan matches the risk level!
+
+- [ ] Example scenario
