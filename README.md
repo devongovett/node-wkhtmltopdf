@@ -19,6 +19,36 @@ Finally, to install the node module, use `npm`:
 Be sure the `wkhtmltopdf` command line tool is in your PATH when you're done installing.  If you don't want to do this for some reason, you can change
 the `require('wkhtmltopdf').command` property to the path to the `wkhtmltopdf` command line tool.
 
+### A maintained program to run
+
+This package starts the wkhtmltopdf program, which is archived: its last
+Linux build is for Ubuntu 22.04, and it does not install on Ubuntu 26.04,
+Debian 13 or Alpine. On Heroku-24 it stops with
+`libssl.so.1.1: cannot open shared object file`.
+
+`marqius-wkhtmltopdf` is a maintained drop-in replacement — the same command
+and options — built from scratch on the foundation of that command line, not a
+fork of the archived code: one statically linked file, no Qt, no X server.
+Installed with npm; the package carries the program for your platform. One
+line points this package at it:
+
+```js
+wkhtmltopdf.command = require("marqius-wkhtmltopdf").path;
+```
+
+Your calls stay as they are. If your project's folder has a space in its
+path, quote it:
+
+```js
+wkhtmltopdf.command = "'" + require("marqius-wkhtmltopdf").path + "'";
+```
+
+In slim images, install one font package first:
+`apt-get install -y --no-install-recommends fonts-dejavu-core`.
+
+The Community licence is free for personal and open-source projects;
+businesses need a commercial licence.
+
 ## Usage
 
 ### wkhtmltopdf(source, [options], [callback]);
